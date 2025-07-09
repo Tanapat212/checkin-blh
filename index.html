@@ -1,1 +1,104 @@
-✅ กำลังจัดแพ็กไฟล์ระบบเช็คชื่อเวอร์ชันเต็ม...
+
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ระบบเช็คชื่อนักเรียน</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: "Prompt", sans-serif;
+      background: linear-gradient(120deg, #d4fcdc, #fffab7);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    .container {
+      background: white;
+      padding: 2rem;
+      border-radius: 1rem;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+      text-align: center;
+      width: 90%;
+      max-width: 400px;
+    }
+    input, select {
+      width: 100%;
+      padding: 0.75rem;
+      margin: 0.5rem 0;
+      border: 1px solid #ccc;
+      border-radius: 0.5rem;
+    }
+    button {
+      width: 100%;
+      padding: 0.75rem;
+      background: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 0.5rem;
+      cursor: pointer;
+    }
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>โรงเรียนบ้านโหล๊ะหาร</h2>
+    <p>ระบบเช็คชื่อนักเรียนออนไลน์</p>
+    <select id="role">
+      <option value="admin">ผู้ดูแลระบบ</option>
+      <option value="teacher">ครูและบุคลากร</option>
+      <option value="student">นักเรียน</option>
+    </select>
+    <input type="text" id="username" placeholder="ชื่อผู้ใช้" />
+    <input type="password" id="password" placeholder="รหัสผ่าน" />
+    <button onclick="login()">เข้าสู่ระบบ</button>
+    <p id="status"></p>
+  </div>
+
+  <script type="module">
+    // Firebase SDK
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
+    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js";
+    import { sha256 } from "https://cdn.jsdelivr.net/npm/js-sha256@0.9.0/+esm";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyB5ywqz9OQOBgHvR0PA_zKDTHp-9Okaw1M",
+      authDomain: "cheked-std-blh2.firebaseapp.com",
+      projectId: "cheked-std-blh2",
+      storageBucket: "cheked-std-blh2.appspot.com",
+      messagingSenderId: "666906947244",
+      appId: "1:666906947244:web:37dfaf2ed3bc25055fd31d"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    async function login() {
+      const role = document.getElementById("role").value;
+      const username = document.getElementById("username").value.trim();
+      const password = document.getElementById("password").value.trim();
+      const hash = sha256(password);
+      const ref = doc(db, "users", username);
+      const snap = await getDoc(ref);
+
+      if (snap.exists()) {
+        const data = snap.data();
+        if (data.password === hash && data.role === role) {
+          document.getElementById("status").innerText = "✅ เข้าสู่ระบบสำเร็จ!";
+          setTimeout(() => {
+            window.location.href = role + ".html";
+          }, 800);
+        } else {
+          document.getElementById("status").innerText = "❌ รหัสผ่านหรือบทบาทไม่ถูกต้อง";
+        }
+      } else {
+        document.getElementById("status").innerText = "❌ ไม่พบบัญชีผู้ใช้นี้";
+      }
+    }
+  </script>
+</body>
+</html>
