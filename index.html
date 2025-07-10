@@ -1,77 +1,75 @@
-
 <!DOCTYPE html>
 <html lang="th">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>ระบบเช็คชื่อนักเรียน</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
     body {
+      font-family: 'Prompt', sans-serif;
+      background: linear-gradient(to bottom right, #d4fcdc, #fffab7);
       margin: 0;
-      padding: 0;
-      font-family: "Prompt", sans-serif;
-      background: linear-gradient(120deg, #d4fcdc, #fffab7);
+      padding: 2rem;
       display: flex;
-      justify-content: center;
+      flex-direction: column;
       align-items: center;
-      height: 100vh;
     }
-    .container {
+    .login-box {
       background: white;
       padding: 2rem;
       border-radius: 1rem;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.15);
-      text-align: center;
-      width: 90%;
+      box-shadow: 0 0 15px rgba(0,0,0,0.1);
+      width: 100%;
       max-width: 400px;
     }
-    input, select {
+    input, select, button {
       width: 100%;
-      padding: 0.75rem;
       margin: 0.5rem 0;
+      padding: 0.75rem;
       border: 1px solid #ccc;
       border-radius: 0.5rem;
+      font-size: 1rem;
     }
     button {
-      width: 100%;
-      padding: 0.75rem;
       background: #4CAF50;
       color: white;
-      border: none;
-      border-radius: 0.5rem;
+      font-weight: bold;
       cursor: pointer;
     }
-    .hidden { display: none; }
+    .status {
+      margin-top: 1rem;
+      color: red;
+    }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h2>โรงเรียนบ้านโหล๊ะหาร</h2>
-    <p>ระบบเช็คชื่อนักเรียนออนไลน์</p>
+  <h2>🏫 โรงเรียนบ้านโหล๊ะหาร</h2>
+  <h3>ระบบเช็คชื่อนักเรียน</h3>
+  <div class="login-box">
     <select id="role">
-      <option value="admin">ผู้ดูแลระบบ</option>
-      <option value="teacher">ครูและบุคลากร</option>
-      <option value="student">นักเรียน</option>
+      <option value="admin">👨‍💼 ผู้ดูแลระบบ</option>
+      <option value="teacher">👩‍🏫 ครูและบุคลากร</option>
+      <option value="student">👨‍🎓 นักเรียน</option>
     </select>
-    <input type="text" id="username" placeholder="ชื่อผู้ใช้" />
-    <input type="password" id="password" placeholder="รหัสผ่าน" />
+    <input type="text" id="username" placeholder="ชื่อผู้ใช้">
+    <input type="password" id="password" placeholder="รหัสผ่าน">
     <button onclick="login()">เข้าสู่ระบบ</button>
-    <p id="status"></p>
+    <div class="status" id="status"></div>
   </div>
 
   <script type="module">
-    // Firebase SDK
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
     import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js";
     import { sha256 } from "https://cdn.jsdelivr.net/npm/js-sha256@0.9.0/+esm";
 
     const firebaseConfig = {
-      apiKey: "AIzaSyB5ywqz9OQOBgHvR0PA_zKDTHp-9Okaw1M",
+      apiKey: "AIzaSyCSDe0i8lQMtXvoa8cm4gN7CWkAKBrLoMQ",
       authDomain: "cheked-std-blh2.firebaseapp.com",
       projectId: "cheked-std-blh2",
       storageBucket: "cheked-std-blh2.appspot.com",
-      messagingSenderId: "666906947244",
-      appId: "1:666906947244:web:37dfaf2ed3bc25055fd31d"
+      messagingSenderId: "580419199399",
+      appId: "1:580419199399:web:378c617388fb179478d682",
+      measurementId: "G-277ZEH2D3P"
     };
 
     const app = initializeApp(firebaseConfig);
@@ -84,19 +82,19 @@
       const hash = sha256(password);
       const ref = doc(db, "users", username);
       const snap = await getDoc(ref);
+      const status = document.getElementById("status");
 
       if (snap.exists()) {
         const data = snap.data();
         if (data.password === hash && data.role === role) {
-          document.getElementById("status").innerText = "✅ เข้าสู่ระบบสำเร็จ!";
-          setTimeout(() => {
-            window.location.href = role + ".html";
-          }, 800);
+          status.style.color = "green";
+          status.innerText = "✅ เข้าสู่ระบบสำเร็จ!";
+          setTimeout(() => window.location.href = role + ".html", 1000);
         } else {
-          document.getElementById("status").innerText = "❌ รหัสผ่านหรือบทบาทไม่ถูกต้อง";
+          status.innerText = "❌ รหัสผ่านหรือบทบาทไม่ถูกต้อง";
         }
       } else {
-        document.getElementById("status").innerText = "❌ ไม่พบบัญชีผู้ใช้นี้";
+        status.innerText = "❌ ไม่พบบัญชีผู้ใช้นี้";
       }
     }
   </script>
