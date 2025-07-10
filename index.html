@@ -1,1 +1,100 @@
-<!-- Login page with Firebase connection -->
+
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ระบบเช็คชื่อนักเรียน</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Sarabun', sans-serif;
+      background: linear-gradient(to bottom right, #a8e063, #fceabb);
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    .container {
+      background: white;
+      padding: 40px;
+      border-radius: 12px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+      width: 350px;
+      text-align: center;
+    }
+    h1 { margin-bottom: 20px; font-size: 22px; }
+    input, select {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+    button {
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      font-size: 16px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🏫 โรงเรียนบ้านโหล๊ะหาร</h1>
+    <h2>ระบบเช็คชื่อนักเรียน</h2>
+    <select id="role">
+      <option>👮‍♂️ ผู้ดูแลระบบ</option>
+      <option>👩‍🏫 ครู</option>
+      <option>👨‍🎓 นักเรียน</option>
+    </select>
+    <input type="text" id="username" placeholder="ชื่อผู้ใช้" />
+    <input type="password" id="password" placeholder="รหัสผ่าน" />
+    <button onclick="login()">เข้าสู่ระบบ</button>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
+    import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCSDe0i8lQMtXvoa8cm4gN7CWkAKBrLoMQ",
+      authDomain: "cheked-std-blh2.firebaseapp.com",
+      projectId: "cheked-std-blh2",
+      storageBucket: "cheked-std-blh2.appspot.com",
+      messagingSenderId: "580419199399",
+      appId: "1:580419199399:web:378c617388fb179478d682",
+      measurementId: "G-277ZEH2D3P"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    window.login = async function () {
+      const username = document.getElementById("username").value;
+      const password = document.getElementById("password").value;
+      const role = document.getElementById("role").value;
+
+      const usersCol = collection(db, "users");
+      const snapshot = await getDocs(usersCol);
+      let found = false;
+
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        if (data.username === username && data.password === password && data.role === role) {
+          found = true;
+          if (role.includes("ผู้ดูแล")) window.location.href = "admin.html";
+          else if (role.includes("ครู")) window.location.href = "teacher.html";
+          else window.location.href = "student.html";
+        }
+      });
+
+      if (!found) alert("ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง");
+    }
+  </script>
+</body>
+</html>
