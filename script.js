@@ -1,0 +1,1 @@
+// JavaScript for routing, Firebase login and redirect
