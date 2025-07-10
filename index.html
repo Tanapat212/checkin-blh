@@ -1,47 +1,138 @@
-
 <!DOCTYPE html>
 <html lang="th">
 <head>
   <meta charset="UTF-8" />
+  <title>ระบบเช็คชื่อนักเรียน</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>เข้าสู่ระบบ</title>
   <style>
-    body { font-family: 'Kanit', sans-serif; background: linear-gradient(to bottom right, #fdfbfb, #ebedee); margin: 0; }
-    .container { padding: 2rem; max-width: 900px; margin: auto; text-align: center; }
-    h1 { color: #2b6777; }
-    .menu { display: flex; flex-wrap: wrap; justify-content: center; gap: 1rem; margin-top: 2rem; }
-    .menu a { text-decoration: none; background: #52ab98; color: white; padding: 1rem 2rem; border-radius: 8px; transition: 0.3s; font-size: 1.1rem; }
-    .menu a:hover { background: #3d8b80; }
+    @import url('https://fonts.googleapis.com/css2?family=Kanit&display=swap');
+    * { box-sizing: border-box; }
+    body {
+      font-family: 'Kanit', sans-serif;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      background: linear-gradient(135deg, #d4fc79, #96e6a1);
+      animation: backgroundMove 10s ease infinite;
+    }
+
+    @keyframes backgroundMove {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    .container {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      padding: 1rem;
+      color: #222;
+    }
+
+    .login-box {
+      background: rgba(255,255,255,0.95);
+      padding: 2rem;
+      border-radius: 1rem;
+      box-shadow: 0 0 20px rgba(0,0,0,0.1);
+      max-width: 400px;
+      width: 100%;
+    }
+
+    select, input, button {
+      width: 100%;
+      padding: 0.75rem;
+      margin: 0.5rem 0;
+      font-size: 1rem;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+    }
+
+    button {
+      background-color: #4CAF50;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    button:hover {
+      background-color: #388e3c;
+    }
+
+    .bubbles {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      top: 0;
+      left: 0;
+      z-index: 0;
+    }
+
+    .bubble {
+      position: absolute;
+      bottom: -100px;
+      width: 40px;
+      height: 40px;
+      background: rgba(255,255,255,0.4);
+      border-radius: 50%;
+      animation: rise 20s infinite ease-in;
+    }
+
+    .bubble:nth-child(2) { left: 20%; animation-duration: 15s; width: 25px; height: 25px; }
+    .bubble:nth-child(3) { left: 40%; animation-duration: 18s; width: 35px; height: 35px; }
+    .bubble:nth-child(4) { left: 60%; animation-duration: 22s; width: 30px; height: 30px; }
+    .bubble:nth-child(5) { left: 80%; animation-duration: 17s; width: 20px; height: 20px; }
+
+    @keyframes rise {
+      0% { transform: translateY(0) scale(1); opacity: 0.6; }
+      100% { transform: translateY(-120vh) scale(1.2); opacity: 0; }
+    }
   </style>
 </head>
 <body>
+  <div class="bubbles">
+    <div class="bubble"></div>
+    <div class="bubble"></div>
+    <div class="bubble"></div>
+    <div class="bubble"></div>
+    <div class="bubble"></div>
+  </div>
   <div class="container">
-    <h1>เข้าสู่ระบบระบบเช็คชื่อนักเรียน</h1>
-    <div class="menu">
-      
-        <form onsubmit="event.preventDefault(); login();" style='width:100%; max-width: 400px; margin:auto;'>
-            <select id="role" style='width:100%; padding:10px; margin:10px 0; font-size:1rem;'>
-              <option value="admin">👨‍💼 ผู้ดูแลระบบ</option>
-              <option value="teacher">👩‍🏫 ครู</option>
-              <option value="student">👦 นักเรียน</option>
-            </select>
-            <input id="username" type="text" placeholder="ชื่อผู้ใช้" required style='width:100%; padding:10px; margin:10px 0;'/>
-            <input id="password" type="password" placeholder="รหัสผ่าน" required style='width:100%; padding:10px; margin:10px 0;'/>
-            <button type="submit" style='width:100%; padding:10px; background:#52ab98; color:white; border:none; font-size:1rem;'>เข้าสู่ระบบ</button>
-        </form>
-        <script>
-        function login() {{
-            const role = document.getElementById('role').value;
-            const user = document.getElementById('username').value;
-            const pass = document.getElementById('password').value;
-            if (role==='admin' && user==='admin' && pass==='admin123') location.href='admin.html';
-            else if (role==='teacher' && user==='teacher' && pass==='teacher123') location.href='teacher.html';
-            else if (role==='student' && user==='student' && pass==='student123') location.href='student.html';
-            else alert('ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง');
-        }}
-        </script>
-        
+    <div class="login-box">
+      <h2>🏫 โรงเรียนบ้านโหล๊ะหาร</h2>
+      <h3>ระบบเช็คชื่อนักเรียน</h3>
+      <select id="role">
+        <option value="admin">👨‍💼 ผู้ดูแลระบบ</option>
+        <option value="teacher">👩‍🏫 ครู</option>
+        <option value="student">👦 นักเรียน</option>
+      </select>
+      <input type="text" id="username" placeholder="ชื่อผู้ใช้">
+      <input type="password" id="password" placeholder="รหัสผ่าน">
+      <button onclick="login()">เข้าสู่ระบบ</button>
     </div>
   </div>
+  <script>
+    function login() {
+      const role = document.getElementById("role").value;
+      const username = document.getElementById("username").value.trim();
+      const password = document.getElementById("password").value;
+
+      if (role === "admin" && username === "admin" && password === "admin123") {
+        window.location.href = "admin.html";
+      } else if (role === "teacher" && username === "teacher" && password === "teacher123") {
+        window.location.href = "teacher.html";
+      } else if (role === "student" && username === "student" && password === "student123") {
+        window.location.href = "student.html";
+      } else {
+        alert("ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง");
+      }
+    }
+  </script>
 </body>
 </html>
