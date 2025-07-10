@@ -1,25 +1,26 @@
 
 body {
   font-family: 'Sarabun', sans-serif;
-  background: linear-gradient(to bottom right, #caffbf, #fdffb6);
+  background: linear-gradient(to bottom right, #bfffc0, #ffffc0);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
   margin: 0;
-  padding: 0;
 }
-.container, .login-container {
-  max-width: 500px;
-  margin: 80px auto;
+.login-container {
   background: white;
+  border-radius: 10px;
   padding: 30px;
-  border-radius: 15px;
-  box-shadow: 0 0 12px rgba(0,0,0,0.15);
+  box-shadow: 0 0 15px rgba(0,0,0,0.2);
   text-align: center;
+  width: 300px;
 }
-.menu button, input, select {
-  width: 90%;
+input, select, button {
+  margin-top: 10px;
   padding: 10px;
-  margin: 10px 0;
-  font-size: 16px;
-  border-radius: 8px;
+  width: 100%;
+  border-radius: 5px;
   border: 1px solid #ccc;
 }
 button {
@@ -27,7 +28,4 @@ button {
   color: white;
   border: none;
   cursor: pointer;
-}
-button:hover {
-  background-color: #45a049;
 }

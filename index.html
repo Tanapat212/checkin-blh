@@ -1,24 +1,25 @@
-
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <meta charset="UTF-8">
-  <title>ระบบเช็คชื่อนักเรียน | โรงเรียนบ้านโหล๊ะหาร</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ระบบเช็คชื่อนักเรียน</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <div class="login-container">
-    <h1>โรงเรียนบ้านโหล๊ะหาร</h1>
-    <h2>ระบบเช็คชื่อนักเรียน</h2>
+    <h2>📚 โรงเรียนบ้านโหล๊ะหาร</h2>
+    <h3>ระบบเช็คชื่อนักเรียน</h3>
     <select id="role">
       <option value="admin">👤 ผู้ดูแลระบบ</option>
-      <option value="teacher">👩‍🏫 ครูและบุคลากร</option>
+      <option value="teacher">👩‍🏫 ครู</option>
       <option value="student">👦 นักเรียน</option>
     </select>
     <input type="text" id="username" placeholder="ชื่อผู้ใช้" />
     <input type="password" id="password" placeholder="รหัสผ่าน" />
     <button onclick="login()">เข้าสู่ระบบ</button>
   </div>
+
   <script type="module" src="firebase-config.js"></script>
   <script type="module" src="script.js"></script>
 </body>
