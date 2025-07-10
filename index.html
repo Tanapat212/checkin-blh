@@ -1,102 +1,47 @@
+
 <!DOCTYPE html>
 <html lang="th">
 <head>
   <meta charset="UTF-8" />
-  <title>ระบบเช็คชื่อนักเรียน</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>เข้าสู่ระบบ</title>
   <style>
-    body {
-      font-family: 'Prompt', sans-serif;
-      background: linear-gradient(to bottom right, #d4fcdc, #fffab7);
-      margin: 0;
-      padding: 2rem;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-    .login-box {
-      background: white;
-      padding: 2rem;
-      border-radius: 1rem;
-      box-shadow: 0 0 15px rgba(0,0,0,0.1);
-      width: 100%;
-      max-width: 400px;
-    }
-    input, select, button {
-      width: 100%;
-      margin: 0.5rem 0;
-      padding: 0.75rem;
-      border: 1px solid #ccc;
-      border-radius: 0.5rem;
-      font-size: 1rem;
-    }
-    button {
-      background: #4CAF50;
-      color: white;
-      font-weight: bold;
-      cursor: pointer;
-    }
-    .status {
-      margin-top: 1rem;
-      color: red;
-    }
+    body { font-family: 'Kanit', sans-serif; background: linear-gradient(to bottom right, #fdfbfb, #ebedee); margin: 0; }
+    .container { padding: 2rem; max-width: 900px; margin: auto; text-align: center; }
+    h1 { color: #2b6777; }
+    .menu { display: flex; flex-wrap: wrap; justify-content: center; gap: 1rem; margin-top: 2rem; }
+    .menu a { text-decoration: none; background: #52ab98; color: white; padding: 1rem 2rem; border-radius: 8px; transition: 0.3s; font-size: 1.1rem; }
+    .menu a:hover { background: #3d8b80; }
   </style>
 </head>
 <body>
-  <h2>🏫 โรงเรียนบ้านโหล๊ะหาร</h2>
-  <h3>ระบบเช็คชื่อนักเรียน</h3>
-  <div class="login-box">
-    <select id="role">
-      <option value="admin">👨‍💼 ผู้ดูแลระบบ</option>
-      <option value="teacher">👩‍🏫 ครูและบุคลากร</option>
-      <option value="student">👨‍🎓 นักเรียน</option>
-    </select>
-    <input type="text" id="username" placeholder="ชื่อผู้ใช้">
-    <input type="password" id="password" placeholder="รหัสผ่าน">
-    <button onclick="login()">เข้าสู่ระบบ</button>
-    <div class="status" id="status"></div>
+  <div class="container">
+    <h1>เข้าสู่ระบบระบบเช็คชื่อนักเรียน</h1>
+    <div class="menu">
+      
+        <form onsubmit="event.preventDefault(); login();" style='width:100%; max-width: 400px; margin:auto;'>
+            <select id="role" style='width:100%; padding:10px; margin:10px 0; font-size:1rem;'>
+              <option value="admin">👨‍💼 ผู้ดูแลระบบ</option>
+              <option value="teacher">👩‍🏫 ครู</option>
+              <option value="student">👦 นักเรียน</option>
+            </select>
+            <input id="username" type="text" placeholder="ชื่อผู้ใช้" required style='width:100%; padding:10px; margin:10px 0;'/>
+            <input id="password" type="password" placeholder="รหัสผ่าน" required style='width:100%; padding:10px; margin:10px 0;'/>
+            <button type="submit" style='width:100%; padding:10px; background:#52ab98; color:white; border:none; font-size:1rem;'>เข้าสู่ระบบ</button>
+        </form>
+        <script>
+        function login() {{
+            const role = document.getElementById('role').value;
+            const user = document.getElementById('username').value;
+            const pass = document.getElementById('password').value;
+            if (role==='admin' && user==='admin' && pass==='admin123') location.href='admin.html';
+            else if (role==='teacher' && user==='teacher' && pass==='teacher123') location.href='teacher.html';
+            else if (role==='student' && user==='student' && pass==='student123') location.href='student.html';
+            else alert('ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง');
+        }}
+        </script>
+        
+    </div>
   </div>
-
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
-    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js";
-    import { sha256 } from "https://cdn.jsdelivr.net/npm/js-sha256@0.9.0/+esm";
-
-    const firebaseConfig = {
-      apiKey: "AIzaSyCSDe0i8lQMtXvoa8cm4gN7CWkAKBrLoMQ",
-      authDomain: "cheked-std-blh2.firebaseapp.com",
-      projectId: "cheked-std-blh2",
-      storageBucket: "cheked-std-blh2.appspot.com",
-      messagingSenderId: "580419199399",
-      appId: "1:580419199399:web:378c617388fb179478d682",
-      measurementId: "G-277ZEH2D3P"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-
-    async function login() {
-      const role = document.getElementById("role").value;
-      const username = document.getElementById("username").value.trim();
-      const password = document.getElementById("password").value.trim();
-      const hash = sha256(password);
-      const ref = doc(db, "users", username);
-      const snap = await getDoc(ref);
-      const status = document.getElementById("status");
-
-      if (snap.exists()) {
-        const data = snap.data();
-        if (data.password === hash && data.role === role) {
-          status.style.color = "green";
-          status.innerText = "✅ เข้าสู่ระบบสำเร็จ!";
-          setTimeout(() => window.location.href = role + ".html", 1000);
-        } else {
-          status.innerText = "❌ รหัสผ่านหรือบทบาทไม่ถูกต้อง";
-        }
-      } else {
-        status.innerText = "❌ ไม่พบบัญชีผู้ใช้นี้";
-      }
-    }
-  </script>
 </body>
 </html>
