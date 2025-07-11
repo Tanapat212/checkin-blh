@@ -848,16 +848,13 @@
                                 <h3 class="profile-name" id="modalUserName">Admin User</h3>
                                 <p class="profile-role" id="modalUserRole">ผู้ดูแลระบบ</p>
                                 <button class="btn btn-yellow w-100" id="changePasswordBtn">เปลี่ยนรหัสผ่าน</button>
+                                <button class="btn btn-danger w-100 mt-10" id="logoutBtn">ออกจากระบบ</button>
                             </div>
                         </div>
                         <div class="profile-content">
                             <div class="form-group">
                                 <label for="modalFullName">ชื่อ-สกุล</label>
                                 <input type="text" id="modalFullName" value="Admin User">
-                            </div>
-                            <div class="form-group">
-                                <label for="modalEmail">อีเมล</label>
-                                <input type="email" id="modalEmail" value="admin@school.ac.th">
                             </div>
                             <div class="form-group">
                                 <label for="modalPhone">โทรศัพท์</label>
@@ -917,10 +914,7 @@
                         <label for="qrSubject">วิชา</label>
                         <select id="qrSubject" class="form-control">
                             <option value="">-- เลือกวิชา --</option>
-                            <option value="math">คณิตศาสตร์</option>
-                            <option value="sci">วิทยาศาสตร์</option>
-                            <option value="thai">ภาษาไทย</option>
-                            <option value="eng">ภาษาอังกฤษ</option>
+                            <!-- Subjects will be loaded dynamically -->
                         </select>
                     </div>
                     <div class="qr-container">
@@ -985,11 +979,9 @@
                     </div>
                     <div class="form-group" id="teacherSubjectGroup" style="display: none;">
                         <label for="teacherSubject">วิชาที่สอน</label>
-                        <input type="text" id="teacherSubject" placeholder="กรอกวิชาที่สอน">
-                    </div>
-                    <div class="form-group">
-                        <label for="userEmail">อีเมล</label>
-                        <input type="email" id="userEmail" placeholder="กรอกอีเมล">
+                        <select id="teacherSubject" class="form-control">
+                            <!-- Subjects will be loaded dynamically -->
+                        </select>
                     </div>
                     <div class="alert" id="addUserAlert" style="display: none;"></div>
                 </div>
@@ -1054,7 +1046,30 @@
         <div class="notification-container" id="notificationContainer"></div>
     </div>
 
-    <script>
+    <!-- Firebase SDK -->
+    <script type="module">
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-app.js";
+        import { getDatabase, ref, set, push, onValue, update, remove } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-database.js";
+        import { getAuth, signInWithEmailAndPassword, signOut, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-auth.js";
+
+        // Your web app's Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyD80WK9Mx-QjXp3lOwIDCIrfLoXoODlzlg",
+            authDomain: "check-name-blh.firebaseapp.com",
+            projectId: "check-name-blh",
+            storageBucket: "check-name-blh.appspot.com",
+            messagingSenderId: "420973526100",
+            appId: "1:420973526100:web:b7a382f4784382e51281c1",
+            measurementId: "G-86R88K64SC",
+            databaseURL: "https://check-name-blh-default-rtdb.asia-southeast1.firebasedatabase.app/"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+        const auth = getAuth(app);
+
         // SHA256 Hash Function
         async function sha256(message) {
             // Encode as UTF-8
@@ -1070,110 +1085,16 @@
             return hashHex;
         }
 
-        // Sample Database
-        const database = {
-            users: [
-                { 
-                    id: 1, 
-                    username: 'admin', 
-                    password: '8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918', // admin123 in SHA256
-                    role: 'admin', 
-                    fullName: 'Admin User', 
-                    email: 'admin@school.ac.th', 
-                    phone: '0812345678',
-                    avatar: null
-                },
-                { 
-                    id: 2, 
-                    username: 'teacher1', 
-                    password: '8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92', // 123456 in SHA256
-                    role: 'teacher', 
-                    fullName: 'ครูสมชาย ใจดี', 
-                    email: 'teacher1@school.ac.th', 
-                    phone: '0823456789',
-                    subject: 'คณิตศาสตร์',
-                    avatar: null
-                },
-                { 
-                    id: 3, 
-                    username: 'student1', 
-                    password: '15e2b0d3c33891ebb0f1ef609ec419420c20e320ce94c65fbc8c3312448eb225', // 01012000 in SHA256 (01/01/2000)
-                    role: 'student', 
-                    fullName: 'นักเรียนหนึ่ง ดีมาก', 
-                    email: 'student1@school.ac.th', 
-                    phone: '0834567890',
-                    studentId: 'S001',
-                    class: 'ม.1/1',
-                    avatar: null
-                }
-            ],
-            subjects: [
-                { id: 'math', name: 'คณิตศาสตร์', teacher: 2 },
-                { id: 'sci', name: 'วิทยาศาสตร์', teacher: 2 },
-                { id: 'thai', name: 'ภาษาไทย', teacher: null },
-                { id: 'eng', name: 'ภาษาอังกฤษ', teacher: null }
-            ],
-            classes: ['ม.1/1', 'ม.1/2', 'ม.2/1', 'ม.2/2', 'ม.3/1', 'ม.3/2'],
-            attendance: [
-                { 
-                    id: 1, 
-                    studentId: 3, 
-                    subject: 'math', 
-                    date: '2023-05-01', 
-                    status: 'present', 
-                    time: '08:30',
-                    checkedBy: 'qr',
-                    qrCode: 'math-20230501-0830'
-                },
-                { 
-                    id: 2, 
-                    studentId: 3, 
-                    subject: 'sci', 
-                    date: '2023-05-02', 
-                    status: 'late', 
-                    time: '09:15',
-                    checkedBy: 'manual',
-                    note: 'รถติด'
-                }
-            ],
-            notifications: [
-                {
-                    id: 1,
-                    title: 'ประกาศจากโรงเรียน',
-                    message: 'วันจันทร์ที่ 8 พฤษภาคม เป็นวันหยุดพิเศษ',
-                    type: 'school',
-                    date: '2023-05-05 14:30',
-                    read: false
-                },
-                {
-                    id: 2,
-                    title: 'การบ้านคณิตศาสตร์',
-                    message: 'ส่งการบ้านบทที่ 5 ภายในวันศุกร์นี้',
-                    type: 'subject',
-                    subject: 'math',
-                    date: '2023-05-06 10:15',
-                    read: false
-                },
-                {
-                    id: 3,
-                    title: 'แจ้งเตือนส่วนตัว',
-                    message: 'คุณมีคาบเรียนวิทยาศาสตร์ในอีก 10 นาที',
-                    type: 'personal',
-                    userId: 3,
-                    date: '2023-05-07 08:50',
-                    read: false
-                }
-            ]
-        };
-
-        // Save database to localStorage
-        localStorage.setItem('attendanceSystemDB', JSON.stringify(database));
-
         // App State
         let currentUser = null;
         let activeQRCode = null;
         let qrInterval = null;
         let qrExpireTime = 5 * 60; // 5 minutes in seconds
+        let subjects = [];
+        let classes = [];
+        let users = [];
+        let attendance = [];
+        let notifications = [];
 
         // DOM Elements
         const loginPage = document.getElementById('loginPage');
@@ -1195,26 +1116,202 @@
         const addUserModal = document.getElementById('addUserModal');
         const importModal = document.getElementById('importModal');
         const notificationContainer = document.getElementById('notificationContainer');
+        const logoutBtn = document.getElementById('logoutBtn');
 
         // Initialize the app
         function init() {
             // Check if user is already logged in
-            const loggedInUser = localStorage.getItem('attendanceSystemUser');
-            if (loggedInUser) {
-                currentUser = JSON.parse(loggedInUser);
-                showApp();
-            } else {
-                showLogin();
-            }
+            auth.onAuthStateChanged((user) => {
+                if (user) {
+                    // User is signed in
+                    fetchUserData(user.uid);
+                } else {
+                    // User is signed out
+                    showLogin();
+                }
+            });
 
             // Event listeners
             setupEventListeners();
+        }
+
+        // Fetch user data from Firebase
+        function fetchUserData(userId) {
+            const userRef = ref(database, 'users/' + userId);
+            
+            onValue(userRef, (snapshot) => {
+                const userData = snapshot.val();
+                if (userData) {
+                    currentUser = {
+                        id: userId,
+                        ...userData
+                    };
+                    localStorage.setItem('attendanceSystemUser', JSON.stringify(currentUser));
+                    showApp();
+                    
+                    // Load other data
+                    loadSubjects();
+                    loadClasses();
+                    loadUsers();
+                    loadAttendance();
+                    loadNotifications();
+                } else {
+                    showNotification('error', 'ไม่พบข้อมูลผู้ใช้');
+                    signOut(auth);
+                }
+            }, {
+                onlyOnce: true
+            });
+        }
+
+        // Load subjects from Firebase
+        function loadSubjects() {
+            const subjectsRef = ref(database, 'subjects');
+            
+            onValue(subjectsRef, (snapshot) => {
+                const data = snapshot.val();
+                subjects = [];
+                
+                if (data) {
+                    Object.keys(data).forEach(key => {
+                        subjects.push({
+                            id: key,
+                            ...data[key]
+                        });
+                    });
+                }
+                
+                // Update QR subject dropdown
+                updateQRSubjectDropdown();
+                // Update teacher subject dropdown
+                updateTeacherSubjectDropdown();
+            });
+        }
+
+        // Load classes from Firebase
+        function loadClasses() {
+            const classesRef = ref(database, 'classes');
+            
+            onValue(classesRef, (snapshot) => {
+                const data = snapshot.val();
+                classes = [];
+                
+                if (data) {
+                    Object.keys(data).forEach(key => {
+                        classes.push(data[key]);
+                    });
+                }
+            });
+        }
+
+        // Load users from Firebase
+        function loadUsers() {
+            const usersRef = ref(database, 'users');
+            
+            onValue(usersRef, (snapshot) => {
+                const data = snapshot.val();
+                users = [];
+                
+                if (data) {
+                    Object.keys(data).forEach(key => {
+                        users.push({
+                            id: key,
+                            ...data[key]
+                        });
+                    });
+                }
+                
+                // Reload current page if users page is active
+                if (document.getElementById('pageTitle').textContent === 'จัดการผู้ใช้') {
+                    loadPage('users');
+                }
+            });
+        }
+
+        // Load attendance from Firebase
+        function loadAttendance() {
+            const attendanceRef = ref(database, 'attendance');
+            
+            onValue(attendanceRef, (snapshot) => {
+                const data = snapshot.val();
+                attendance = [];
+                
+                if (data) {
+                    Object.keys(data).forEach(key => {
+                        attendance.push({
+                            id: key,
+                            ...data[key]
+                        });
+                    });
+                }
+                
+                // Reload current page if attendance page is active
+                const currentPage = document.querySelector('.nav-links a.active')?.dataset.page;
+                if (currentPage && ['attendance', 'myAttendance', 'manualAttendance'].includes(currentPage)) {
+                    loadPage(currentPage);
+                }
+            });
+        }
+
+        // Load notifications from Firebase
+        function loadNotifications() {
+            const notificationsRef = ref(database, 'notifications');
+            
+            onValue(notificationsRef, (snapshot) => {
+                const data = snapshot.val();
+                notifications = [];
+                
+                if (data) {
+                    Object.keys(data).forEach(key => {
+                        notifications.push({
+                            id: key,
+                            ...data[key]
+                        });
+                    });
+                }
+                
+                updateNotificationBadge();
+            });
+        }
+
+        // Update QR subject dropdown
+        function updateQRSubjectDropdown() {
+            const qrSubjectSelect = document.getElementById('qrSubject');
+            if (!qrSubjectSelect) return;
+            
+            qrSubjectSelect.innerHTML = '<option value="">-- เลือกวิชา --</option>';
+            
+            if (currentUser.role === 'teacher') {
+                // Teacher can only select their own subjects
+                const mySubjects = subjects.filter(s => s.teacherId === currentUser.id);
+                mySubjects.forEach(subject => {
+                    qrSubjectSelect.innerHTML += `<option value="${subject.id}">${subject.name}</option>`;
+                });
+            } else {
+                // Admin can select all subjects
+                subjects.forEach(subject => {
+                    qrSubjectSelect.innerHTML += `<option value="${subject.id}">${subject.name}</option>`;
+                });
+            }
+        }
+
+        // Update teacher subject dropdown
+        function updateTeacherSubjectDropdown() {
+            const teacherSubjectSelect = document.getElementById('teacherSubject');
+            if (!teacherSubjectSelect) return;
+            
+            teacherSubjectSelect.innerHTML = '<option value="">-- เลือกวิชา --</option>';
+            subjects.forEach(subject => {
+                teacherSubjectSelect.innerHTML += `<option value="${subject.id}">${subject.name}</option>`;
+            });
         }
 
         // Show login page
         function showLogin() {
             loginPage.style.display = 'flex';
             appContainer.style.display = 'none';
+            loginUsername.value = '';
+            loginPassword.value = '';
         }
 
         // Show main app
@@ -1243,7 +1340,6 @@
             document.getElementById('modalUserName').textContent = currentUser.fullName;
             document.getElementById('modalUserRole').textContent = getRoleName(currentUser.role);
             document.getElementById('modalFullName').value = currentUser.fullName;
-            document.getElementById('modalEmail').value = currentUser.email || '';
             document.getElementById('modalPhone').value = currentUser.phone || '';
             
             // Update sidebar based on role
@@ -1353,6 +1449,11 @@
                 showChangePasswordModal();
             });
             
+            // Logout button
+            if (logoutBtn) {
+                logoutBtn.addEventListener('click', handleLogout);
+            }
+            
             // Save profile button
             document.getElementById('saveProfileBtn').addEventListener('click', saveProfile);
             
@@ -1391,23 +1492,32 @@
                 return;
             }
             
-            // Hash the password
-            const hashedPassword = await sha256(password);
-            
-            // Find user in database
-            const db = getDatabase();
-            const user = db.users.find(u => u.username === username && u.password === hashedPassword);
-            
-            if (user) {
-                // Login successful
-                currentUser = user;
-                localStorage.setItem('attendanceSystemUser', JSON.stringify(user));
-                showApp();
+            try {
+                // For demo, we'll use email-style login (username@school.com)
+                const email = `${username}@school.com`;
+                
+                // Sign in with Firebase Auth
+                const userCredential = await signInWithEmailAndPassword(auth, email, password);
+                const user = userCredential.user;
+                
+                // Fetch user data
+                fetchUserData(user.uid);
                 showNotification('success', 'เข้าสู่ระบบสำเร็จ');
-            } else {
-                // Login failed
+            } catch (error) {
+                console.error('Login error:', error);
                 showNotification('error', 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง');
             }
+        }
+
+        // Handle logout
+        function handleLogout() {
+            signOut(auth).then(() => {
+                showNotification('success', 'ออกจากระบบเรียบร้อย');
+                showLogin();
+            }).catch((error) => {
+                console.error('Logout error:', error);
+                showNotification('error', 'เกิดข้อผิดพลาดในการออกจากระบบ');
+            });
         }
 
         // Load page content
@@ -1466,16 +1576,16 @@
                     content = loadReports();
                     break;
                 case 'users':
-                    content = loadUsers();
+                    content = loadUsersPage();
                     break;
                 case 'subjects':
-                    content = loadSubjects();
+                    content = loadSubjectsPage();
                     break;
                 case 'classes':
-                    content = loadClasses();
+                    content = loadClassesPage();
                     break;
                 case 'notifications':
-                    content = loadNotifications();
+                    content = loadNotificationsPage();
                     break;
                 case 'myAttendance':
                     content = loadStudentAttendance();
@@ -1515,6 +1625,12 @@
                 case 'manualAttendance':
                     initManualAttendance();
                     break;
+                case 'users':
+                    initUsersPage();
+                    break;
+                case 'subjects':
+                    initSubjectsPage();
+                    break;
             }
         }
 
@@ -1523,12 +1639,11 @@
             let content = '';
             
             if (currentUser.role === 'admin') {
-                const db = getDatabase();
-                const totalStudents = db.users.filter(u => u.role === 'student').length;
-                const totalTeachers = db.users.filter(u => u.role === 'teacher').length;
-                const totalSubjects = db.subjects.length;
+                const totalStudents = users.filter(u => u.role === 'student').length;
+                const totalTeachers = users.filter(u => u.role === 'teacher').length;
+                const totalSubjects = subjects.length;
                 const today = new Date().toISOString().split('T')[0];
-                const todayAttendance = db.attendance.filter(a => a.date === today).length;
+                const todayAttendance = attendance.filter(a => a.date === today).length;
                 
                 content = `
                     <div class="dashboard-cards">
@@ -1577,17 +1692,23 @@
                                 </tr>
                             </thead>
                             <tbody id="recentNotifications">
-                                <!-- Notifications will be loaded here -->
+                                ${notifications.slice(0, 5).map(notif => `
+                                    <tr>
+                                        <td>${notif.title}</td>
+                                        <td>${notif.message}</td>
+                                        <td>${formatDate(notif.date)}</td>
+                                    </tr>
+                                `).join('')}
                             </tbody>
                         </table>
                     </div>
                 `;
             } else if (currentUser.role === 'teacher') {
-                const db = getDatabase();
-                const mySubjects = db.subjects.filter(s => s.teacher === currentUser.id);
-                const myStudents = db.users.filter(u => u.role === 'student').length; // Simplified
+                const mySubjects = subjects.filter(s => s.teacherId === currentUser.id);
+                const myStudents = users.filter(u => u.role === 'student' && 
+                    u.class && classes.includes(u.class)).length;
                 const today = new Date().toISOString().split('T')[0];
-                const todayAttendance = db.attendance.filter(a => 
+                const todayAttendance = attendance.filter(a => 
                     a.date === today && 
                     mySubjects.some(s => s.id === a.subject)
                 ).length;
@@ -1639,25 +1760,21 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr>
-                                    <td>คณิตศาสตร์</td>
-                                    <td>08:30 - 10:00</td>
-                                    <td>ม.1/1</td>
-                                </tr>
-                                <tr>
-                                    <td>วิทยาศาสตร์</td>
-                                    <td>10:30 - 12:00</td>
-                                    <td>ม.2/2</td>
-                                </tr>
+                                ${mySubjects.slice(0, 3).map(subject => `
+                                    <tr>
+                                        <td>${subject.name}</td>
+                                        <td>08:30 - 10:00</td>
+                                        <td>${classes[0] || '-'}</td>
+                                    </tr>
+                                `).join('')}
                             </tbody>
                         </table>
                     </div>
                 `;
             } else if (currentUser.role === 'student') {
-                const db = getDatabase();
                 const mySubjects = ['math', 'sci', 'thai', 'eng']; // Simplified
                 const today = new Date().toISOString().split('T')[0];
-                const todayAttendance = db.attendance.filter(a => 
+                const todayAttendance = attendance.filter(a => 
                     a.date === today && 
                     a.studentId === currentUser.id
                 );
@@ -1714,24 +1831,28 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr>
-                                    <td>คณิตศาสตร์</td>
-                                    <td>08:30 - 10:00</td>
-                                    <td>ห้อง 201</td>
-                                    <td class="status-present">มาเรียน</td>
-                                </tr>
-                                <tr>
-                                    <td>ภาษาอังกฤษ</td>
-                                    <td>10:30 - 12:00</td>
-                                    <td>ห้อง 202</td>
-                                    <td class="status-late">มาสาย</td>
-                                </tr>
-                                <tr>
-                                    <td>วิทยาศาสตร์</td>
-                                    <td>13:00 - 14:30</td>
-                                    <td>ห้อง 203</td>
-                                    <td class="status-absent">ขาดเรียน</td>
-                                </tr>
+                                ${mySubjects.slice(0, 3).map(subjectId => {
+                                    const subject = subjects.find(s => s.id === subjectId);
+                                    const attendanceRecord = todayAttendance.find(a => a.subject === subjectId);
+                                    let statusClass = 'status-absent';
+                                    let statusText = 'ขาดเรียน';
+                                    
+                                    if (attendanceRecord) {
+                                        statusClass = attendanceRecord.status === 'present' ? 'status-present' : 
+                                                     attendanceRecord.status === 'late' ? 'status-late' : 'status-absent';
+                                        statusText = attendanceRecord.status === 'present' ? 'มาเรียน' : 
+                                                     attendanceRecord.status === 'late' ? 'มาสาย' : 'ขาดเรียน';
+                                    }
+                                    
+                                    return `
+                                        <tr>
+                                            <td>${subject ? subject.name : subjectId}</td>
+                                            <td>08:30 - 10:00</td>
+                                            <td>${currentUser.class || '-'}</td>
+                                            <td class="${statusClass}">${statusText}</td>
+                                        </tr>
+                                    `;
+                                }).join('')}
                             </tbody>
                         </table>
                     </div>
@@ -1760,32 +1881,8 @@
                 }
             }
             
-            // Load recent notifications for admin
-            if (currentUser.role === 'admin') {
-                loadRecentNotifications();
-            }
-            
             // Initialize chart
             initAttendanceChart();
-        }
-
-        // Load recent notifications
-        function loadRecentNotifications() {
-            const db = getDatabase();
-            const recentNotifications = db.notifications
-                .sort((a, b) => new Date(b.date) - new Date(a.date))
-                .slice(0, 5);
-            
-            const notificationsList = document.getElementById('recentNotifications');
-            if (notificationsList) {
-                notificationsList.innerHTML = recentNotifications.map(notif => `
-                    <tr>
-                        <td>${notif.title}</td>
-                        <td>${notif.message}</td>
-                        <td>${formatDate(notif.date)}</td>
-                    </tr>
-                `).join('');
-            }
         }
 
         // Initialize attendance chart
@@ -1800,7 +1897,6 @@
             
             if (currentUser.role === 'admin') {
                 // Admin sees school-wide stats for the last 7 days
-                const db = getDatabase();
                 const today = new Date();
                 labels = Array.from({ length: 7 }, (_, i) => {
                     const date = new Date(today);
@@ -1809,14 +1905,14 @@
                 });
                 
                 presentData = labels.map(date => {
-                    const count = db.attendance.filter(a => 
+                    const count = attendance.filter(a => 
                         a.date === date && a.status === 'present'
                     ).length;
                     return count;
                 });
                 
                 lateData = labels.map(date => {
-                    const count = db.attendance.filter(a => 
+                    const count = attendance.filter(a => 
                         a.date === date && a.status === 'late'
                     ).length;
                     return count;
@@ -1824,13 +1920,12 @@
                 
                 absentData = labels.map(date => {
                     // Simplified - assumes each student has 4 classes per day
-                    const totalStudents = db.users.filter(u => u.role === 'student').length;
+                    const totalStudents = users.filter(u => u.role === 'student').length;
                     return (totalStudents * 4) - presentData[labels.indexOf(date)] - lateData[labels.indexOf(date)];
                 });
             } else if (currentUser.role === 'teacher') {
                 // Teacher sees stats for their subjects for the last 7 days
-                const db = getDatabase();
-                const mySubjects = db.subjects.filter(s => s.teacher === currentUser.id);
+                const mySubjects = subjects.filter(s => s.teacherId === currentUser.id);
                 const today = new Date();
                 labels = Array.from({ length: 7 }, (_, i) => {
                     const date = new Date(today);
@@ -1839,7 +1934,7 @@
                 });
                 
                 presentData = labels.map(date => {
-                    const count = db.attendance.filter(a => 
+                    const count = attendance.filter(a => 
                         a.date === date && 
                         a.status === 'present' && 
                         mySubjects.some(s => s.id === a.subject)
@@ -1848,7 +1943,7 @@
                 });
                 
                 lateData = labels.map(date => {
-                    const count = db.attendance.filter(a => 
+                    const count = attendance.filter(a => 
                         a.date === date && 
                         a.status === 'late' && 
                         mySubjects.some(s => s.id === a.subject)
@@ -1858,12 +1953,12 @@
                 
                 absentData = labels.map(date => {
                     // Simplified - assumes each student has 1 class per subject per day
-                    const myStudents = db.users.filter(u => u.role === 'student').length;
+                    const myStudents = users.filter(u => u.role === 'student' && 
+                        u.class && classes.includes(u.class)).length;
                     return (myStudents * mySubjects.length) - presentData[labels.indexOf(date)] - lateData[labels.indexOf(date)];
                 });
             } else if (currentUser.role === 'student') {
                 // Student sees their own stats for the last 7 days
-                const db = getDatabase();
                 const today = new Date();
                 labels = Array.from({ length: 7 }, (_, i) => {
                     const date = new Date(today);
@@ -1872,7 +1967,7 @@
                 });
                 
                 presentData = labels.map(date => {
-                    const count = db.attendance.filter(a => 
+                    const count = attendance.filter(a => 
                         a.date === date && 
                         a.studentId === currentUser.id && 
                         a.status === 'present'
@@ -1881,7 +1976,7 @@
                 });
                 
                 lateData = labels.map(date => {
-                    const count = db.attendance.filter(a => 
+                    const count = attendance.filter(a => 
                         a.date === date && 
                         a.studentId === currentUser.id && 
                         a.status === 'late'
@@ -1934,8 +2029,6 @@
 
         // Load attendance list (for admin)
         function loadAttendanceList() {
-            const db = getDatabase();
-            
             return `
                 <div class="d-flex justify-between align-center mb-20">
                     <h3>ประวัติการเช็คชื่อ</h3>
@@ -1965,9 +2058,9 @@
                             </tr>
                         </thead>
                         <tbody>
-                            ${db.attendance.map(record => {
-                                const student = db.users.find(u => u.id === record.studentId);
-                                const subject = db.subjects.find(s => s.id === record.subject);
+                            ${attendance.slice(0, 50).map(record => {
+                                const student = users.find(u => u.id === record.studentId);
+                                const subject = subjects.find(s => s.id === record.subject);
                                 const statusClass = record.status === 'present' ? 'status-present' : 
                                                   record.status === 'late' ? 'status-late' : 'status-absent';
                                 const statusText = record.status === 'present' ? 'มาเรียน' : 
@@ -2024,7 +2117,24 @@
                             </tr>
                         </thead>
                         <tbody id="recentAttendance">
-                            <!-- Recent attendance will be loaded here -->
+                            ${attendance.slice(0, 10).map(record => {
+                                const student = users.find(u => u.id === record.studentId);
+                                const subject = subjects.find(s => s.id === record.subject);
+                                const statusClass = record.status === 'present' ? 'status-present' : 
+                                                  record.status === 'late' ? 'status-late' : 'status-absent';
+                                const statusText = record.status === 'present' ? 'มาเรียน' : 
+                                                 record.status === 'late' ? 'มาสาย' : 'ขาดเรียน';
+                                
+                                return `
+                                    <tr>
+                                        <td>${formatDate(record.date)}</td>
+                                        <td>${subject ? subject.name : 'ไม่พบข้อมูล'}</td>
+                                        <td>${student ? student.fullName : 'ไม่พบข้อมูล'}</td>
+                                        <td class="${statusClass}">${statusText}</td>
+                                        <td>${record.time || '-'}</td>
+                                    </tr>
+                                `;
+                            }).join('')}
                         </tbody>
                     </table>
                 </div>
@@ -2065,10 +2175,9 @@
                         <label for="reportSubject">วิชา (เลือกทั้งหมดเพื่อดูทุกวิชา)</label>
                         <select id="reportSubject" class="form-control">
                             <option value="all">ทั้งหมด</option>
-                            <option value="math">คณิตศาสตร์</option>
-                            <option value="sci">วิทยาศาสตร์</option>
-                            <option value="thai">ภาษาไทย</option>
-                            <option value="eng">ภาษาอังกฤษ</option>
+                            ${subjects.map(subject => `
+                                <option value="${subject.id}">${subject.name}</option>
+                            `).join('')}
                         </select>
                     </div>
                     
@@ -2076,12 +2185,9 @@
                         <label for="reportClass">ห้องเรียน (เลือกทั้งหมดเพื่อดูทุกห้อง)</label>
                         <select id="reportClass" class="form-control">
                             <option value="all">ทั้งหมด</option>
-                            <option value="ม.1/1">ม.1/1</option>
-                            <option value="ม.1/2">ม.1/2</option>
-                            <option value="ม.2/1">ม.2/1</option>
-                            <option value="ม.2/2">ม.2/2</option>
-                            <option value="ม.3/1">ม.3/1</option>
-                            <option value="ม.3/2">ม.3/2</option>
+                            ${classes.map(cls => `
+                                <option value="${cls}">${cls}</option>
+                            `).join('')}
                         </select>
                     </div>
                     
@@ -2111,6 +2217,8 @@
                     </div>
                 `;
             } else if (currentUser.role === 'teacher') {
+                const mySubjects = subjects.filter(s => s.teacherId === currentUser.id);
+                
                 content = `
                     <div class="d-flex justify-between align-center mb-20">
                         <h3>รายงานสถิติการเช็คชื่อ</h3>
@@ -2133,18 +2241,18 @@
                     <div class="form-group">
                         <label for="reportSubject">วิชา</label>
                         <select id="reportSubject" class="form-control">
-                            <option value="math">คณิตศาสตร์</option>
-                            <option value="sci">วิทยาศาสตร์</option>
+                            ${mySubjects.map(subject => `
+                                <option value="${subject.id}">${subject.name}</option>
+                            `).join('')}
                         </select>
                     </div>
                     
                     <div class="form-group">
                         <label for="reportClass">ห้องเรียน</label>
                         <select id="reportClass" class="form-control">
-                            <option value="ม.1/1">ม.1/1</option>
-                            <option value="ม.1/2">ม.1/2</option>
-                            <option value="ม.2/1">ม.2/1</option>
-                            <option value="ม.2/2">ม.2/2</option>
+                            ${classes.map(cls => `
+                                <option value="${cls}">${cls}</option>
+                            `).join('')}
                         </select>
                     </div>
                     
@@ -2388,9 +2496,7 @@
         }
 
         // Load users page (admin only)
-        function loadUsers() {
-            const db = getDatabase();
-            
+        function loadUsersPage() {
             return `
                 <div class="d-flex justify-between align-center mb-20">
                     <h3>จัดการผู้ใช้ระบบ</h3>
@@ -2413,18 +2519,16 @@
                                 <th>ชื่อผู้ใช้</th>
                                 <th>ชื่อ-สกุล</th>
                                 <th>บทบาท</th>
-                                <th>อีเมล</th>
                                 <th>โทรศัพท์</th>
                                 <th>การกระทำ</th>
                             </tr>
                         </thead>
                         <tbody>
-                            ${db.users.map(user => `
+                            ${users.map(user => `
                                 <tr>
                                     <td>${user.username}</td>
                                     <td>${user.fullName}</td>
                                     <td>${getRoleName(user.role)}</td>
-                                    <td>${user.email || '-'}</td>
                                     <td>${user.phone || '-'}</td>
                                     <td>
                                         <button class="btn btn-secondary btn-sm edit-user" data-id="${user.id}">
@@ -2447,10 +2551,96 @@
             `;
         }
 
-        // Load subjects page (admin only)
-        function loadSubjects() {
-            const db = getDatabase();
+        // Initialize users page
+        function initUsersPage() {
+            // Add user button
+            document.getElementById('addUserBtn').addEventListener('click', () => {
+                openModal(addUserModal);
+            });
             
+            // Edit user buttons
+            document.querySelectorAll('.edit-user').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const userId = e.target.closest('button').dataset.id;
+                    editUser(userId);
+                });
+            });
+            
+            // Delete user buttons
+            document.querySelectorAll('.delete-user').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const userId = e.target.closest('button').dataset.id;
+                    deleteUser(userId);
+                });
+            });
+            
+            // Reset password buttons
+            document.querySelectorAll('.reset-password').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const userId = e.target.closest('button').dataset.id;
+                    resetPassword(userId);
+                });
+            });
+        }
+
+        // Edit user
+        function editUser(userId) {
+            const user = users.find(u => u.id === userId);
+            if (!user) return;
+            
+            // Fill the add user modal with user data
+            document.getElementById('userRole').value = user.role;
+            document.getElementById('newUsername').value = user.username;
+            document.getElementById('newFullName').value = user.fullName;
+            
+            if (user.role === 'student') {
+                document.getElementById('studentId').value = user.studentId || '';
+            } else if (user.role === 'teacher') {
+                document.getElementById('teacherSubject').value = user.subjectId || '';
+            }
+            
+            document.getElementById('modalTitle').textContent = 'แก้ไขผู้ใช้';
+            document.getElementById('saveUserBtn').textContent = 'บันทึกการเปลี่ยนแปลง';
+            document.getElementById('saveUserBtn').dataset.userId = userId;
+            
+            openModal(addUserModal);
+        }
+
+        // Delete user
+        function deleteUser(userId) {
+            if (confirm('คุณแน่ใจหรือไม่ว่าต้องการลบผู้ใช้นี้?')) {
+                const userRef = ref(database, 'users/' + userId);
+                remove(userRef).then(() => {
+                    showNotification('success', 'ลบผู้ใช้เรียบร้อย');
+                }).catch((error) => {
+                    console.error('Error deleting user:', error);
+                    showNotification('error', 'เกิดข้อผิดพลาดในการลบผู้ใช้');
+                });
+            }
+        }
+
+        // Reset password
+        function resetPassword(userId) {
+            const user = users.find(u => u.id === userId);
+            if (!user) return;
+            
+            if (confirm(`คุณแน่ใจหรือไม่ว่าต้องการรีเซ็ตรหัสผ่านสำหรับ ${user.fullName}? รหัสผ่านจะถูกตั้งเป็น "password123"`)) {
+                const hashedPassword = sha256('password123').then(hashed => {
+                    const userRef = ref(database, 'users/' + userId);
+                    update(userRef, {
+                        password: hashed
+                    }).then(() => {
+                        showNotification('success', 'รีเซ็ตรหัสผ่านเรียบร้อย');
+                    }).catch((error) => {
+                        console.error('Error resetting password:', error);
+                        showNotification('error', 'เกิดข้อผิดพลาดในการรีเซ็ตรหัสผ่าน');
+                    });
+                });
+            }
+        }
+
+        // Load subjects page (admin only)
+        function loadSubjectsPage() {
             return `
                 <div class="d-flex justify-between align-center mb-20">
                     <h3>จัดการวิชาเรียน</h3>
@@ -2472,8 +2662,8 @@
                             </tr>
                         </thead>
                         <tbody>
-                            ${db.subjects.map(subject => {
-                                const teacher = db.users.find(u => u.id === subject.teacher);
+                            ${subjects.map(subject => {
+                                const teacher = users.find(u => u.id === subject.teacherId);
                                 return `
                                     <tr>
                                         <td>${subject.id}</td>
@@ -2496,10 +2686,43 @@
             `;
         }
 
-        // Load classes page (admin only)
-        function loadClasses() {
-            const db = getDatabase();
+        // Initialize subjects page
+        function initSubjectsPage() {
+            // Add subject button
+            document.getElementById('addSubjectBtn').addEventListener('click', () => {
+                // You would implement this similar to add user
+                showNotification('info', 'ฟังก์ชันเพิ่มวิชาจะถูกพัฒนาต่อไป');
+            });
             
+            // Edit subject buttons
+            document.querySelectorAll('.edit-subject').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const subjectId = e.target.closest('button').dataset.id;
+                    // You would implement this similar to edit user
+                    showNotification('info', 'ฟังก์ชันแก้ไขวิชาจะถูกพัฒนาต่อไป');
+                });
+            });
+            
+            // Delete subject buttons
+            document.querySelectorAll('.delete-subject').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const subjectId = e.target.closest('button').dataset.id;
+                    
+                    if (confirm('คุณแน่ใจหรือไม่ว่าต้องการลบวิชานี้?')) {
+                        const subjectRef = ref(database, 'subjects/' + subjectId);
+                        remove(subjectRef).then(() => {
+                            showNotification('success', 'ลบวิชาเรียบร้อย');
+                        }).catch((error) => {
+                            console.error('Error deleting subject:', error);
+                            showNotification('error', 'เกิดข้อผิดพลาดในการลบวิชา');
+                        });
+                    }
+                });
+            });
+        }
+
+        // Load classes page (admin only)
+        function loadClassesPage() {
             return `
                 <div class="d-flex justify-between align-center mb-20">
                     <h3>จัดการห้องเรียน</h3>
@@ -2521,8 +2744,8 @@
                             </tr>
                         </thead>
                         <tbody>
-                            ${db.classes.map(cls => {
-                                const students = db.users.filter(u => u.role === 'student' && u.class === cls).length;
+                            ${classes.map(cls => {
+                                const students = users.filter(u => u.role === 'student' && u.class === cls).length;
                                 return `
                                     <tr>
                                         <td>${cls}</td>
@@ -2543,9 +2766,7 @@
         }
 
         // Load notifications page (admin only)
-        function loadNotifications() {
-            const db = getDatabase();
-            
+        function loadNotificationsPage() {
             return `
                 <div class="d-flex justify-between align-center mb-20">
                     <h3>จัดการแจ้งเตือน</h3>
@@ -2568,7 +2789,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            ${db.notifications.map(notif => `
+                            ${notifications.map(notif => `
                                 <tr>
                                     <td>${notif.title}</td>
                                     <td>${notif.message}</td>
@@ -2593,8 +2814,7 @@
 
         // Load student attendance page
         function loadStudentAttendance() {
-            const db = getDatabase();
-            const myAttendance = db.attendance.filter(a => a.studentId === currentUser.id);
+            const myAttendance = attendance.filter(a => a.studentId === currentUser.id);
             
             return `
                 <h3>ประวัติการเช็คชื่อของฉัน</h3>
@@ -2618,7 +2838,7 @@
                         </thead>
                         <tbody>
                             ${myAttendance.map(record => {
-                                const subject = db.subjects.find(s => s.id === record.subject);
+                                const subject = subjects.find(s => s.id === record.subject);
                                 const statusClass = record.status === 'present' ? 'status-present' : 
                                                   record.status === 'late' ? 'status-late' : 'status-absent';
                                 const statusText = record.status === 'present' ? 'มาเรียน' : 
@@ -2643,23 +2863,22 @@
 
         // Load student subjects page
         function loadStudentSubjects() {
-            const db = getDatabase();
             // Simplified - assume student is enrolled in all subjects
-            const mySubjects = db.subjects;
+            const mySubjects = subjects;
             
             return `
                 <h3>วิชาที่ฉันเรียน</h3>
                 
                 <div class="dashboard-cards">
                     ${mySubjects.map(subject => {
-                        const teacher = db.users.find(u => u.id === subject.teacher);
-                        const attendance = db.attendance.filter(a => 
+                        const teacher = users.find(u => u.id === subject.teacherId);
+                        const subjectAttendance = attendance.filter(a => 
                             a.studentId === currentUser.id && 
                             a.subject === subject.id
                         );
-                        const presentCount = attendance.filter(a => a.status === 'present').length;
-                        const lateCount = attendance.filter(a => a.status === 'late').length;
-                        const absentCount = attendance.length - presentCount - lateCount;
+                        const presentCount = subjectAttendance.filter(a => a.status === 'present').length;
+                        const lateCount = subjectAttendance.filter(a => a.status === 'late').length;
+                        const absentCount = subjectAttendance.length - presentCount - lateCount;
                         
                         return `
                             <div class="card">
@@ -2689,27 +2908,18 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <tr>
-                                <td>จันทร์</td>
-                                <td>08:30 - 10:00</td>
-                                <td>คณิตศาสตร์</td>
-                                <td>ห้อง 201</td>
-                                <td>ครูสมชาย ใจดี</td>
-                            </tr>
-                            <tr>
-                                <td>จันทร์</td>
-                                <td>10:30 - 12:00</td>
-                                <td>ภาษาอังกฤษ</td>
-                                <td>ห้อง 202</td>
-                                <td>ครูสมหญิง น่ารัก</td>
-                            </tr>
-                            <tr>
-                                <td>อังคาร</td>
-                                <td>08:30 - 10:00</td>
-                                <td>วิทยาศาสตร์</td>
-                                <td>ห้อง 203</td>
-                                <td>ครูสมชาย ใจดี</td>
-                            </tr>
+                            ${mySubjects.slice(0, 3).map(subject => {
+                                const teacher = users.find(u => u.id === subject.teacherId);
+                                return `
+                                    <tr>
+                                        <td>จันทร์</td>
+                                        <td>08:30 - 10:00</td>
+                                        <td>${subject.name}</td>
+                                        <td>${currentUser.class || '-'}</td>
+                                        <td>${teacher ? teacher.fullName : 'ยังไม่มีครู'}</td>
+                                    </tr>
+                                `;
+                            }).join('')}
                         </tbody>
                     </table>
                 </div>
@@ -2718,31 +2928,28 @@
 
         // Load student profile page
         function loadStudentProfile() {
-            const db = getDatabase();
-            const student = db.users.find(u => u.id === currentUser.id);
-            
             return `
                 <div class="profile-container">
                     <div class="profile-sidebar">
                         <div class="profile-card">
                             <div class="profile-avatar">
-                                ${student.avatar ? 
-                                    `<img src="${student.avatar}" alt="${student.fullName}">` : 
-                                    `<span>${student.fullName.split(' ').map(name => name[0]).join('')}</span>`
+                                ${currentUser.avatar ? 
+                                    `<img src="${currentUser.avatar}" alt="${currentUser.fullName}">` : 
+                                    `<span>${currentUser.fullName.split(' ').map(name => name[0]).join('')}</span>`
                                 }
                             </div>
-                            <h3 class="profile-name">${student.fullName}</h3>
+                            <h3 class="profile-name">${currentUser.fullName}</h3>
                             <p class="profile-role">นักเรียน</p>
                             <button class="btn btn-yellow w-100" id="changePasswordBtn">เปลี่ยนรหัสผ่าน</button>
+                            <button class="btn btn-danger w-100 mt-10" id="logoutBtn">ออกจากระบบ</button>
                         </div>
                         
                         <div class="profile-card">
                             <h3>ข้อมูลพื้นฐาน</h3>
                             <div class="profile-details">
-                                <p><i class="fas fa-id-card"></i> รหัสนักเรียน: ${student.studentId || '-'}</p>
-                                <p><i class="fas fa-school"></i> ห้องเรียน: ${student.class || '-'}</p>
-                                <p><i class="fas fa-envelope"></i> อีเมล: ${student.email || '-'}</p>
-                                <p><i class="fas fa-phone"></i> โทรศัพท์: ${student.phone || '-'}</p>
+                                <p><i class="fas fa-id-card"></i> รหัสนักเรียน: ${currentUser.studentId || '-'}</p>
+                                <p><i class="fas fa-school"></i> ห้องเรียน: ${currentUser.class || '-'}</p>
+                                <p><i class="fas fa-phone"></i> โทรศัพท์: ${currentUser.phone || '-'}</p>
                             </div>
                         </div>
                     </div>
@@ -2751,15 +2958,11 @@
                         <h3>แก้ไขโปรไฟล์</h3>
                         <div class="form-group">
                             <label for="profileFullName">ชื่อ-สกุล</label>
-                            <input type="text" id="profileFullName" value="${student.fullName}">
-                        </div>
-                        <div class="form-group">
-                            <label for="profileEmail">อีเมล</label>
-                            <input type="email" id="profileEmail" value="${student.email || ''}">
+                            <input type="text" id="profileFullName" value="${currentUser.fullName}">
                         </div>
                         <div class="form-group">
                             <label for="profilePhone">โทรศัพท์</label>
-                            <input type="tel" id="profilePhone" value="${student.phone || ''}">
+                            <input type="tel" id="profilePhone" value="${currentUser.phone || ''}">
                         </div>
                         <div class="form-group">
                             <label for="profileAvatar">รูปโปรไฟล์</label>
@@ -2780,8 +2983,7 @@
 
         // Load manual attendance page (for teachers)
         function loadManualAttendance() {
-            const db = getDatabase();
-            const myStudents = db.users.filter(u => u.role === 'student'); // Simplified
+            const myStudents = users.filter(u => u.role === 'student' && u.class);
             
             return `
                 <div class="d-flex justify-between align-center mb-20">
@@ -2797,8 +2999,9 @@
                     <label for="manualSubject">วิชา</label>
                     <select id="manualSubject" class="form-control">
                         <option value="">-- เลือกวิชา --</option>
-                        <option value="math">คณิตศาสตร์</option>
-                        <option value="sci">วิทยาศาสตร์</option>
+                        ${subjects.filter(s => s.teacherId === currentUser.id).map(subject => `
+                            <option value="${subject.id}">${subject.name}</option>
+                        `).join('')}
                     </select>
                 </div>
                 
@@ -2869,51 +3072,39 @@
             const statusElements = document.querySelectorAll('.attendance-status');
             const noteElements = document.querySelectorAll('.attendance-note');
             
-            const db = getDatabase();
             let count = 0;
             
             statusElements.forEach((select, index) => {
-                const studentId = parseInt(select.dataset.student);
+                const studentId = select.dataset.student;
                 const status = select.value;
                 const note = noteElements[index].value;
                 
-                // Add or update attendance record
-                const existingIndex = db.attendance.findIndex(a => 
-                    a.studentId === studentId && 
-                    a.subject === subject && 
-                    a.date === date
-                );
-                
-                if (existingIndex >= 0) {
-                    db.attendance[existingIndex].status = status;
-                    db.attendance[existingIndex].note = note;
-                    db.attendance[existingIndex].checkedBy = 'manual';
-                } else {
-                    db.attendance.push({
-                        id: db.attendance.length + 1,
-                        studentId,
-                        subject,
-                        date,
-                        status,
-                        note,
-                        checkedBy: 'manual',
-                        time: new Date().toTimeString().substring(0, 5)
-                    });
-                }
-                
-                count++;
+                // Create new attendance record
+                const newAttendanceRef = push(ref(database, 'attendance'));
+                set(newAttendanceRef, {
+                    studentId,
+                    subject,
+                    date,
+                    status,
+                    note,
+                    checkedBy: 'manual',
+                    time: new Date().toTimeString().substring(0, 5)
+                }).then(() => {
+                    count++;
+                    
+                    if (count === statusElements.length) {
+                        showNotification('success', `บันทึกการเช็คชื่อเรียบร้อย ${count} รายการ`);
+                    }
+                }).catch((error) => {
+                    console.error('Error saving attendance:', error);
+                    showNotification('error', 'เกิดข้อผิดพลาดในการบันทึกการเช็คชื่อ');
+                });
             });
-            
-            // Save to database
-            saveDatabase(db);
-            
-            showNotification('success', `บันทึกการเช็คชื่อเรียบร้อย ${count} รายการ`);
         }
 
         // Load teacher students page
         function loadTeacherStudents() {
-            const db = getDatabase();
-            const myStudents = db.users.filter(u => u.role === 'student'); // Simplified
+            const myStudents = users.filter(u => u.role === 'student' && u.class);
             
             return `
                 <h3>นักเรียนของฉัน</h3>
@@ -2938,13 +3129,13 @@
                         </thead>
                         <tbody>
                             ${myStudents.map(student => {
-                                const attendance = db.attendance.filter(a => 
+                                const studentAttendance = attendance.filter(a => 
                                     a.studentId === student.id && 
-                                    ['math', 'sci'].includes(a.subject) // Simplified for demo
+                                    subjects.some(s => s.id === a.subject && s.teacherId === currentUser.id)
                                 );
-                                const presentCount = attendance.filter(a => a.status === 'present').length;
-                                const lateCount = attendance.filter(a => a.status === 'late').length;
-                                const absentCount = attendance.length - presentCount - lateCount;
+                                const presentCount = studentAttendance.filter(a => a.status === 'present').length;
+                                const lateCount = studentAttendance.filter(a => a.status === 'late').length;
+                                const absentCount = studentAttendance.length - presentCount - lateCount;
                                 
                                 return `
                                     <tr>
@@ -2971,7 +3162,6 @@
         // Show profile modal
         function showProfileModal() {
             document.getElementById('modalFullName').value = currentUser.fullName;
-            document.getElementById('modalEmail').value = currentUser.email || '';
             document.getElementById('modalPhone').value = currentUser.phone || '';
             
             // Set avatar
@@ -3119,18 +3309,18 @@
             }
             
             // Update database
-            const db = getDatabase();
-            const userIndex = db.users.findIndex(u => u.id === currentUser.id);
-            if (userIndex >= 0) {
-                db.users[userIndex].avatar = currentUser.avatar;
-                saveDatabase(db);
-            }
+            const userRef = ref(database, 'users/' + currentUser.id);
+            update(userRef, {
+                avatar: currentUser.avatar
+            }).catch((error) => {
+                console.error('Error updating avatar:', error);
+                showNotification('error', 'เกิดข้อผิดพลาดในการอัพเดตรูปโปรไฟล์');
+            });
         }
 
         // Save profile changes
         function saveProfile() {
             const fullName = document.getElementById('modalFullName').value.trim();
-            const email = document.getElementById('modalEmail').value.trim();
             const phone = document.getElementById('modalPhone').value.trim();
             
             if (!fullName) {
@@ -3140,21 +3330,22 @@
             
             // Update current user
             currentUser.fullName = fullName;
-            currentUser.email = email;
             currentUser.phone = phone;
             
             // Update database
-            const db = getDatabase();
-            const userIndex = db.users.findIndex(u => u.id === currentUser.id);
-            if (userIndex >= 0) {
-                db.users[userIndex] = currentUser;
-                saveDatabase(db);
-            }
-            
-            // Update UI
-            updateUserUI();
-            closeModal(profileModal);
-            showNotification('success', 'บันทึกการเปลี่ยนแปลงโปรไฟล์เรียบร้อย');
+            const userRef = ref(database, 'users/' + currentUser.id);
+            update(userRef, {
+                fullName: currentUser.fullName,
+                phone: currentUser.phone
+            }).then(() => {
+                // Update UI
+                updateUserUI();
+                closeModal(profileModal);
+                showNotification('success', 'บันทึกการเปลี่ยนแปลงโปรไฟล์เรียบร้อย');
+            }).catch((error) => {
+                console.error('Error updating profile:', error);
+                showNotification('error', 'เกิดข้อผิดพลาดในการบันทึกโปรไฟล์');
+            });
         }
 
         // Change password
@@ -3184,33 +3375,33 @@
                 return;
             }
             
-            // Verify current password
-            const hashedCurrentPass = await sha256(currentPass);
-            if (hashedCurrentPass !== currentUser.password) {
+            try {
+                // Verify current password by re-authenticating
+                const email = `${currentUser.username}@school.com`;
+                await signInWithEmailAndPassword(auth, email, currentPass);
+                
+                // Hash new password
+                const hashedNewPass = await sha256(newPass);
+                
+                // Update password in Firebase Auth
+                await updatePassword(auth.currentUser, newPass);
+                
+                // Update password in database
+                const userRef = ref(database, 'users/' + currentUser.id);
+                await update(userRef, {
+                    password: hashedNewPass
+                });
+                
+                // Update current user
+                currentUser.password = hashedNewPass;
+                
+                closeModal(changePasswordModal);
+                showNotification('success', 'เปลี่ยนรหัสผ่านเรียบร้อย');
+            } catch (error) {
+                console.error('Error changing password:', error);
                 alertElement.textContent = 'รหัสผ่านปัจจุบันไม่ถูกต้อง';
                 alertElement.style.display = 'block';
-                return;
             }
-            
-            // Hash new password
-            const hashedNewPass = await sha256(newPass);
-            
-            // Update password
-            currentUser.password = hashedNewPass;
-            
-            // Update database
-            const db = getDatabase();
-            const userIndex = db.users.findIndex(u => u.id === currentUser.id);
-            if (userIndex >= 0) {
-                db.users[userIndex].password = hashedNewPass;
-                saveDatabase(db);
-            }
-            
-            // Update localStorage
-            localStorage.setItem('attendanceSystemUser', JSON.stringify(currentUser));
-            
-            closeModal(changePasswordModal);
-            showNotification('success', 'เปลี่ยนรหัสผ่านเรียบร้อย');
         }
 
         // Toggle user role fields
@@ -3237,7 +3428,6 @@
             const fullName = document.getElementById('newFullName').value.trim();
             const studentId = document.getElementById('studentId').value.trim();
             const teacherSubject = document.getElementById('teacherSubject').value.trim();
-            const email = document.getElementById('userEmail').value.trim();
             
             const alertElement = document.getElementById('addUserAlert');
             alertElement.style.display = 'none';
@@ -3261,43 +3451,51 @@
             }
             
             // Check if username already exists
-            const db = getDatabase();
-            if (db.users.some(u => u.username === username)) {
+            if (users.some(u => u.username === username)) {
                 alertElement.textContent = 'ชื่อผู้ใช้นี้มีอยู่แล้ว';
                 alertElement.style.display = 'block';
                 return;
             }
             
-            // Hash password
-            const hashedPassword = await sha256(password);
-            
-            // Create new user
-            const newUser = {
-                id: db.users.length + 1,
-                username,
-                password: hashedPassword,
-                role,
-                fullName,
-                email
-            };
-            
-            if (role === 'student') {
-                newUser.studentId = studentId;
-                newUser.class = 'ม.1/1'; // Default class for demo
-            } else if (role === 'teacher') {
-                newUser.subject = teacherSubject;
-            }
-            
-            // Add to database
-            db.users.push(newUser);
-            saveDatabase(db);
-            
-            closeModal(addUserModal);
-            showNotification('success', 'เพิ่มผู้ใช้ใหม่เรียบร้อย');
-            
-            // Reload users page if currently viewing it
-            if (document.getElementById('pageTitle').textContent === 'จัดการผู้ใช้') {
-                loadPage('users');
+            try {
+                // Hash password
+                const hashedPassword = await sha256(password);
+                
+                // Create user in Firebase Auth
+                const email = `${username}@school.com`;
+                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                const userId = userCredential.user.uid;
+                
+                // Create user data
+                const userData = {
+                    username,
+                    password: hashedPassword,
+                    role,
+                    fullName
+                };
+                
+                if (role === 'student') {
+                    userData.studentId = studentId;
+                    userData.class = classes[0] || 'ม.1/1'; // Default class
+                } else if (role === 'teacher') {
+                    userData.subjectId = teacherSubject;
+                }
+                
+                // Save to database
+                const userRef = ref(database, 'users/' + userId);
+                await set(userRef, userData);
+                
+                closeModal(addUserModal);
+                showNotification('success', 'เพิ่มผู้ใช้ใหม่เรียบร้อย');
+                
+                // Reload users page if currently viewing it
+                if (document.getElementById('pageTitle').textContent === 'จัดการผู้ใช้') {
+                    loadPage('users');
+                }
+            } catch (error) {
+                console.error('Error saving user:', error);
+                alertElement.textContent = 'เกิดข้อผิดพลาดในการเพิ่มผู้ใช้';
+                alertElement.style.display = 'block';
             }
         }
 
@@ -3399,8 +3597,8 @@
                     const jsonData = XLSX.utils.sheet_to_json(firstSheet);
                     
                     // Process data
-                    const db = getDatabase();
                     let count = 0;
+                    let errors = 0;
                     
                     for (const row of jsonData) {
                         const studentId = row['รหัสนักเรียน'];
@@ -3410,6 +3608,7 @@
                         const classroom = row['ห้องเรียน'];
                         
                         if (!studentId || !firstName || !lastName || !birthDate || !classroom) {
+                            errors++;
                             continue;
                         }
                         
@@ -3423,43 +3622,58 @@
                             year = dateParts[2];
                         } else {
                             // Try other date formats if needed
+                            errors++;
                             continue;
                         }
                         
                         const password = `${day}${month}${year}`;
                         const hashedPassword = await sha256(password);
+                        const username = `student${studentId}`;
                         
-                        // Check if student already exists
-                        const existingStudent = db.users.find(u => 
-                            u.role === 'student' && 
-                            u.studentId === studentId
-                        );
-                        
-                        if (existingStudent) {
-                            // Update existing student
-                            existingStudent.fullName = `${firstName} ${lastName}`;
-                            existingStudent.class = classroom;
-                        } else {
-                            // Add new student
-                            db.users.push({
-                                id: db.users.length + 1,
-                                username: `student${studentId}`,
-                                password: hashedPassword,
-                                role: 'student',
-                                fullName: `${firstName} ${lastName}`,
-                                studentId,
-                                class: classroom
-                            });
+                        try {
+                            // Check if student already exists
+                            const existingStudent = users.find(u => 
+                                u.role === 'student' && 
+                                u.studentId === studentId
+                            );
+                            
+                            if (existingStudent) {
+                                // Update existing student
+                                const userRef = ref(database, 'users/' + existingStudent.id);
+                                await update(userRef, {
+                                    fullName: `${firstName} ${lastName}`,
+                                    class: classroom
+                                });
+                            } else {
+                                // Create new student in Firebase Auth
+                                const email = `${username}@school.com`;
+                                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                                const userId = userCredential.user.uid;
+                                
+                                // Create student data
+                                const studentData = {
+                                    username,
+                                    password: hashedPassword,
+                                    role: 'student',
+                                    fullName: `${firstName} ${lastName}`,
+                                    studentId,
+                                    class: classroom
+                                };
+                                
+                                // Save to database
+                                const userRef = ref(database, 'users/' + userId);
+                                await set(userRef, studentData);
+                            }
+                            
+                            count++;
+                        } catch (error) {
+                            console.error('Error importing student:', error);
+                            errors++;
                         }
-                        
-                        count++;
                     }
                     
-                    // Save database
-                    saveDatabase(db);
-                    
                     closeModal(importModal);
-                    showNotification('success', `นำเข้าข้อมูลนักเรียนเรียบร้อย ${count} รายการ`);
+                    showNotification('success', `นำเข้าข้อมูลนักเรียนเรียบร้อย ${count} รายการ${errors > 0 ? ` (มี ${errors} รายการที่ไม่สำเร็จ)` : ''}`);
                     
                     // Reload users page if currently viewing it
                     if (document.getElementById('pageTitle').textContent === 'จัดการผู้ใช้') {
@@ -3525,19 +3739,18 @@
         function updateNotificationBadge() {
             if (!currentUser) return;
             
-            const db = getDatabase();
             let unreadCount = 0;
             
             if (currentUser.role === 'admin') {
-                unreadCount = db.notifications.filter(n => !n.read).length;
+                unreadCount = notifications.filter(n => !n.read).length;
             } else if (currentUser.role === 'teacher') {
-                unreadCount = db.notifications.filter(n => 
+                unreadCount = notifications.filter(n => 
                     !n.read && 
                     (n.type === 'school' || 
-                     (n.type === 'subject' && ['math', 'sci'].includes(n.subject))) // Simplified for demo
+                     (n.type === 'subject' && subjects.some(s => s.id === n.subjectId && s.teacherId === currentUser.id)))
                 ).length;
             } else if (currentUser.role === 'student') {
-                unreadCount = db.notifications.filter(n => 
+                unreadCount = notifications.filter(n => 
                     !n.read && 
                     (n.type === 'school' || 
                      n.type === 'subject' || 
@@ -3566,17 +3779,6 @@
                 const options = { day: '2-digit', month: '2-digit', year: 'numeric' };
                 return date.toLocaleDateString('th-TH', options);
             }
-        }
-
-        // Get database from localStorage
-        function getDatabase() {
-            const db = localStorage.getItem('attendanceSystemDB');
-            return db ? JSON.parse(db) : JSON.parse(JSON.stringify(database));
-        }
-
-        // Save database to localStorage
-        function saveDatabase(db) {
-            localStorage.setItem('attendanceSystemDB', JSON.stringify(db));
         }
 
         // Initialize the app when DOM is loaded
