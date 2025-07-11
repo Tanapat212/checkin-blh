@@ -1,26 +1,3586 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>ระบบเช็คชื่อนักเรียน</title>
-  <link rel="stylesheet" href="style.css" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบเช็คชื่อนักเรียนออนไลน์ - โรงเรียนบ้านโหล๊ะหาร</title>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.1/chart.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
+    <style>
+        :root {
+            --primary-green: #2e7d32;
+            --secondary-green: #81c784;
+            --primary-yellow: #ffd600;
+            --secondary-yellow: #fff176;
+            --dark-gray: #333;
+            --light-gray: #f5f5f5;
+            --white: #ffffff;
+            --black: #000000;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Kanit', sans-serif;
+            transition: all 0.3s ease;
+        }
+
+        body {
+            background-color: var(--light-gray);
+            color: var(--dark-gray);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Header Styles */
+        header {
+            background: linear-gradient(135deg, var(--primary-green), var(--secondary-green));
+            color: var(--white);
+            padding: 15px 0;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            border-bottom: 4px solid var(--primary-yellow);
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+        }
+
+        .logo img {
+            height: 50px;
+            margin-right: 15px;
+        }
+
+        .logo-text h1 {
+            font-size: 1.5rem;
+            font-weight: 500;
+            margin-bottom: 5px;
+        }
+
+        .logo-text p {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        /* Navigation */
+        nav {
+            display: flex;
+            align-items: center;
+        }
+
+        .nav-links {
+            display: flex;
+            list-style: none;
+        }
+
+        .nav-links li {
+            margin-left: 20px;
+        }
+
+        .nav-links a {
+            color: var(--white);
+            text-decoration: none;
+            font-weight: 400;
+            padding: 8px 12px;
+            border-radius: 4px;
+        }
+
+        .nav-links a:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .user-menu {
+            display: flex;
+            align-items: center;
+            margin-left: 30px;
+            position: relative;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: var(--primary-yellow);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--dark-gray);
+            font-weight: bold;
+            cursor: pointer;
+            overflow: hidden;
+        }
+
+        .user-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .notification-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background-color: var(--primary-yellow);
+            color: var(--dark-gray);
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            font-weight: bold;
+        }
+
+        /* Main Content */
+        .main-content {
+            display: flex;
+            margin-top: 20px;
+        }
+
+        .sidebar {
+            width: 250px;
+            background-color: var(--white);
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            padding: 20px;
+            margin-right: 20px;
+        }
+
+        .sidebar-menu {
+            list-style: none;
+        }
+
+        .sidebar-menu li {
+            margin-bottom: 10px;
+        }
+
+        .sidebar-menu a {
+            display: flex;
+            align-items: center;
+            padding: 10px 15px;
+            color: var(--dark-gray);
+            text-decoration: none;
+            border-radius: 6px;
+        }
+
+        .sidebar-menu a:hover, .sidebar-menu a.active {
+            background-color: var(--secondary-green);
+            color: var(--white);
+        }
+
+        .sidebar-menu i {
+            margin-right: 10px;
+            width: 20px;
+            text-align: center;
+        }
+
+        .content {
+            flex: 1;
+            background-color: var(--white);
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            padding: 20px;
+        }
+
+        .page-title {
+            font-size: 1.8rem;
+            color: var(--primary-green);
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--primary-yellow);
+        }
+
+        /* Dashboard Cards */
+        .dashboard-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background-color: var(--white);
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        .card-icon {
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+            color: var(--primary-green);
+        }
+
+        .card-title {
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+            color: var(--dark-gray);
+        }
+
+        .card-value {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: var(--primary-green);
+        }
+
+        /* Tables */
+        .table-responsive {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background-color: var(--primary-green);
+            color: var(--white);
+            font-weight: 500;
+        }
+
+        tr:hover {
+            background-color: #f5f5f5;
+        }
+
+        .status-present {
+            color: var(--primary-green);
+            font-weight: bold;
+        }
+
+        .status-absent {
+            color: #f44336;
+            font-weight: bold;
+        }
+
+        .status-late {
+            color: var(--primary-yellow);
+            font-weight: bold;
+        }
+
+        /* Forms */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 10px 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: var(--primary-green);
+            box-shadow: 0 0 0 2px rgba(46, 125, 50, 0.2);
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: var(--primary-green);
+            color: var(--white);
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+            text-align: center;
+        }
+
+        .btn:hover {
+            background-color: #1b5e20;
+        }
+
+        .btn-yellow {
+            background-color: var(--primary-yellow);
+            color: var(--dark-gray);
+        }
+
+        .btn-yellow:hover {
+            background-color: #ffc107;
+        }
+
+        .btn-secondary {
+            background-color: #757575;
+        }
+
+        .btn-secondary:hover {
+            background-color: #616161;
+        }
+
+        .btn-danger {
+            background-color: #f44336;
+        }
+
+        .btn-danger:hover {
+            background-color: #d32f2f;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background-color: var(--white);
+            border-radius: 8px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            animation: modalFadeIn 0.3s;
+        }
+
+        @keyframes modalFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .modal-header {
+            padding: 15px 20px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: var(--primary-green);
+            color: var(--white);
+            border-radius: 8px 8px 0 0;
+        }
+
+        .modal-title {
+            font-size: 1.3rem;
+            font-weight: 500;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: var(--white);
+            cursor: pointer;
+        }
+
+        .modal-body {
+            padding: 20px;
+        }
+
+        .modal-footer {
+            padding: 15px 20px;
+            border-top: 1px solid #eee;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        /* QR Code Container */
+        .qr-container {
+            text-align: center;
+            padding: 20px;
+        }
+
+        .qr-code {
+            margin: 20px auto;
+            padding: 10px;
+            background-color: var(--white);
+            display: inline-block;
+        }
+
+        /* Charts */
+        .chart-container {
+            position: relative;
+            height: 400px;
+            margin-bottom: 30px;
+        }
+
+        /* Profile */
+        .profile-container {
+            display: flex;
+            gap: 30px;
+        }
+
+        .profile-sidebar {
+            width: 250px;
+        }
+
+        .profile-card {
+            background-color: var(--white);
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .profile-avatar {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            margin: 0 auto 15px;
+            overflow: hidden;
+            border: 5px solid var(--primary-yellow);
+        }
+
+        .profile-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .profile-name {
+            font-size: 1.3rem;
+            margin-bottom: 5px;
+            color: var(--primary-green);
+        }
+
+        .profile-role {
+            color: var(--dark-gray);
+            margin-bottom: 15px;
+        }
+
+        .profile-details {
+            text-align: left;
+        }
+
+        .profile-details p {
+            margin-bottom: 10px;
+            display: flex;
+        }
+
+        .profile-details i {
+            width: 20px;
+            margin-right: 10px;
+            color: var(--primary-green);
+        }
+
+        .profile-content {
+            flex: 1;
+        }
+
+        /* Login Page */
+        .login-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, var(--primary-green), var(--secondary-green));
+        }
+
+        .login-card {
+            background-color: var(--white);
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            max-width: 400px;
+            overflow: hidden;
+            animation: cardFadeIn 0.5s;
+        }
+
+        @keyframes cardFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .login-header {
+            background-color: var(--primary-yellow);
+            color: var(--dark-gray);
+            padding: 20px;
+            text-align: center;
+        }
+
+        .login-header h2 {
+            font-size: 1.8rem;
+            margin-bottom: 5px;
+        }
+
+        .login-body {
+            padding: 30px;
+        }
+
+        .login-footer {
+            text-align: center;
+            padding: 15px;
+            background-color: #f5f5f5;
+            color: #666;
+        }
+
+        /* Notifications */
+        .notification-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1100;
+            max-width: 350px;
+        }
+
+        .notification {
+            background-color: var(--white);
+            border-radius: 6px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            padding: 15px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: flex-start;
+            animation: notificationSlideIn 0.3s;
+            transform: translateX(0);
+            opacity: 1;
+            transition: all 0.3s ease;
+        }
+
+        @keyframes notificationSlideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .notification.hide {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+
+        .notification-icon {
+            font-size: 1.5rem;
+            margin-right: 15px;
+            color: var(--primary-green);
+        }
+
+        .notification-info {
+            flex: 1;
+        }
+
+        .notification-title {
+            font-weight: 500;
+            margin-bottom: 5px;
+        }
+
+        .notification-message {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .notification-close {
+            background: none;
+            border: none;
+            color: #999;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+
+        /* Responsive Styles */
+        @media (max-width: 992px) {
+            .main-content {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                width: 100%;
+                margin-right: 0;
+                margin-bottom: 20px;
+            }
+
+            .profile-container {
+                flex-direction: column;
+            }
+
+            .profile-sidebar {
+                width: 100%;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .logo {
+                margin-bottom: 15px;
+                justify-content: center;
+            }
+
+            nav {
+                width: 100%;
+                justify-content: center;
+                margin-top: 15px;
+            }
+
+            .user-menu {
+                margin-left: 15px;
+            }
+
+            .dashboard-cards {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .nav-links {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+
+            .nav-links li {
+                margin: 5px;
+            }
+
+            .modal-content {
+                width: 95%;
+            }
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .slide-up {
+            animation: slideUp 0.5s ease-out;
+        }
+
+        /* Utility Classes */
+        .text-center {
+            text-align: center;
+        }
+
+        .text-right {
+            text-align: right;
+        }
+
+        .mt-10 {
+            margin-top: 10px;
+        }
+
+        .mt-20 {
+            margin-top: 20px;
+        }
+
+        .mb-10 {
+            margin-bottom: 10px;
+        }
+
+        .mb-20 {
+            margin-bottom: 20px;
+        }
+
+        .d-flex {
+            display: flex;
+        }
+
+        .justify-between {
+            justify-content: space-between;
+        }
+
+        .align-center {
+            align-items: center;
+        }
+
+        .w-100 {
+            width: 100%;
+        }
+    </style>
 </head>
 <body>
-  <div class="login-container">
-    <h2>📚 โรงเรียนบ้านโหล๊ะหาร</h2>
-    <h3>ระบบเช็คชื่อนักเรียน</h3>
-    <select id="role">
-      <option value="admin">👤 ผู้ดูแลระบบ</option>
-      <option value="teacher">👩‍🏫 ครู</option>
-      <option value="student">👦 นักเรียน</option>
-    </select>
-    <input type="text" id="username" placeholder="ชื่อผู้ใช้" />
-    <input type="password" id="password" placeholder="รหัสผ่าน" />
-    <button onclick="login()">เข้าสู่ระบบ</button>
-  </div>
+    <!-- Login Page (Initially visible) -->
+    <div id="loginPage" class="login-container">
+        <div class="login-card">
+            <div class="login-header">
+                <h2>โรงเรียนบ้านโหล๊ะหาร</h2>
+                <p>ระบบเช็คชื่อนักเรียนออนไลน์</p>
+            </div>
+            <div class="login-body">
+                <div class="form-group">
+                    <label for="loginUsername">ชื่อผู้ใช้</label>
+                    <input type="text" id="loginUsername" placeholder="กรอกชื่อผู้ใช้">
+                </div>
+                <div class="form-group">
+                    <label for="loginPassword">รหัสผ่าน</label>
+                    <input type="password" id="loginPassword" placeholder="กรอกรหัสผ่าน">
+                </div>
+                <button id="loginBtn" class="btn btn-yellow w-100">เข้าสู่ระบบ</button>
+            </div>
+            <div class="login-footer">
+                <p>ระบบสำหรับครูและนักเรียน โรงเรียนบ้านโหล๊ะหาร</p>
+            </div>
+        </div>
+    </div>
 
-  <script type="module" src="firebase-config.js"></script>
-  <script type="module" src="script.js"></script>
+    <!-- Main Application (Initially hidden) -->
+    <div id="appContainer" style="display: none;">
+        <header>
+            <div class="container header-content">
+                <div class="logo">
+                    <img src="https://via.placeholder.com/50" alt="โรงเรียนบ้านโหล๊ะหาร">
+                    <div class="logo-text">
+                        <h1>ระบบเช็คชื่อนักเรียนออนไลน์</h1>
+                        <p>โรงเรียนบ้านโหล๊ะหาร</p>
+                    </div>
+                </div>
+                <nav>
+                    <ul class="nav-links">
+                        <li><a href="#" class="active" data-page="dashboard"><i class="fas fa-home"></i> หน้าหลัก</a></li>
+                        <li><a href="#" data-page="attendance"><i class="fas fa-clipboard-check"></i> เช็คชื่อ</a></li>
+                        <li><a href="#" data-page="reports"><i class="fas fa-chart-bar"></i> รายงาน</a></li>
+                        <li><a href="#" data-page="users"><i class="fas fa-users"></i> ผู้ใช้</a></li>
+                    </ul>
+                    <div class="user-menu">
+                        <div class="user-avatar" id="userAvatar">
+                            <span id="avatarInitial">A</span>
+                            <div class="notification-badge" id="notificationBadge" style="display: none;">0</div>
+                        </div>
+                    </div>
+                </nav>
+            </div>
+        </header>
+
+        <div class="container main-content">
+            <aside class="sidebar">
+                <ul class="sidebar-menu" id="sidebarMenu">
+                    <!-- Dynamic sidebar content will be inserted here based on user role -->
+                </ul>
+            </aside>
+
+            <main class="content" id="mainContent">
+                <!-- Dynamic content will be inserted here -->
+                <h1 class="page-title" id="pageTitle">Dashboard</h1>
+                <div id="dynamicContent">
+                    <!-- Content will be loaded here -->
+                </div>
+            </main>
+        </div>
+
+        <!-- User Profile Modal -->
+        <div id="profileModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 class="modal-title">โปรไฟล์ผู้ใช้</h3>
+                    <button class="modal-close">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="profile-container">
+                        <div class="profile-sidebar">
+                            <div class="profile-card">
+                                <div class="profile-avatar" id="modalAvatar">
+                                    <span id="modalAvatarInitial">A</span>
+                                </div>
+                                <h3 class="profile-name" id="modalUserName">Admin User</h3>
+                                <p class="profile-role" id="modalUserRole">ผู้ดูแลระบบ</p>
+                                <button class="btn btn-yellow w-100" id="changePasswordBtn">เปลี่ยนรหัสผ่าน</button>
+                            </div>
+                        </div>
+                        <div class="profile-content">
+                            <div class="form-group">
+                                <label for="modalFullName">ชื่อ-สกุล</label>
+                                <input type="text" id="modalFullName" value="Admin User">
+                            </div>
+                            <div class="form-group">
+                                <label for="modalEmail">อีเมล</label>
+                                <input type="email" id="modalEmail" value="admin@school.ac.th">
+                            </div>
+                            <div class="form-group">
+                                <label for="modalPhone">โทรศัพท์</label>
+                                <input type="tel" id="modalPhone" value="0812345678">
+                            </div>
+                            <div class="form-group">
+                                <label for="modalAvatarUpload">รูปโปรไฟล์</label>
+                                <input type="file" id="modalAvatarUpload" accept="image/*">
+                            </div>
+                            <div class="text-right">
+                                <button class="btn" id="saveProfileBtn">บันทึกการเปลี่ยนแปลง</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Change Password Modal -->
+        <div id="changePasswordModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 class="modal-title">เปลี่ยนรหัสผ่าน</h3>
+                    <button class="modal-close">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="currentPassword">รหัสผ่านปัจจุบัน</label>
+                        <input type="password" id="currentPassword" placeholder="กรอกรหัสผ่านปัจจุบัน">
+                    </div>
+                    <div class="form-group">
+                        <label for="newPassword">รหัสผ่านใหม่</label>
+                        <input type="password" id="newPassword" placeholder="กรอกรหัสผ่านใหม่">
+                    </div>
+                    <div class="form-group">
+                        <label for="confirmPassword">ยืนยันรหัสผ่านใหม่</label>
+                        <input type="password" id="confirmPassword" placeholder="กรอกรหัสผ่านใหม่อีกครั้ง">
+                    </div>
+                    <div class="alert" id="passwordAlert" style="display: none;"></div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary modal-close">ยกเลิก</button>
+                    <button class="btn" id="savePasswordBtn">บันทึกรหัสผ่าน</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- QR Code Modal -->
+        <div id="qrModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 class="modal-title">QR Code เช็คชื่อ</h3>
+                    <button class="modal-close">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="qrSubject">วิชา</label>
+                        <select id="qrSubject" class="form-control">
+                            <option value="">-- เลือกวิชา --</option>
+                            <option value="math">คณิตศาสตร์</option>
+                            <option value="sci">วิทยาศาสตร์</option>
+                            <option value="thai">ภาษาไทย</option>
+                            <option value="eng">ภาษาอังกฤษ</option>
+                        </select>
+                    </div>
+                    <div class="qr-container">
+                        <div id="qrCode" class="qr-code"></div>
+                        <p>ให้นักเรียนสแกน QR Code เพื่อเช็คชื่อเข้าชั้นเรียน</p>
+                        <p>QR Code นี้จะหมดอายุใน <span id="qrExpireTime">5:00</span> นาที</p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary modal-close">ปิด</button>
+                    <button class="btn" id="refreshQrBtn">สร้าง QR Code ใหม่</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Notification Modal -->
+        <div id="notificationModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 class="modal-title">แจ้งเตือน</h3>
+                    <button class="modal-close">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div id="notificationList">
+                        <!-- Notifications will be loaded here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Add User Modal -->
+        <div id="addUserModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 class="modal-title">เพิ่มผู้ใช้ใหม่</h3>
+                    <button class="modal-close">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="userRole">บทบาท</label>
+                        <select id="userRole" class="form-control">
+                            <option value="student">นักเรียน</option>
+                            <option value="teacher">ครู</option>
+                            <option value="admin">ผู้ดูแลระบบ</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="newUsername">ชื่อผู้ใช้</label>
+                        <input type="text" id="newUsername" placeholder="กรอกชื่อผู้ใช้">
+                    </div>
+                    <div class="form-group">
+                        <label for="newPassword">รหัสผ่านเริ่มต้น</label>
+                        <input type="text" id="newPassword" placeholder="รหัสผ่านเริ่มต้น" value="password123" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label for="newFullName">ชื่อ-สกุล</label>
+                        <input type="text" id="newFullName" placeholder="กรอกชื่อ-สกุล">
+                    </div>
+                    <div class="form-group" id="studentIdGroup">
+                        <label for="studentId">รหัสนักเรียน</label>
+                        <input type="text" id="studentId" placeholder="กรอกรหัสนักเรียน">
+                    </div>
+                    <div class="form-group" id="teacherSubjectGroup" style="display: none;">
+                        <label for="teacherSubject">วิชาที่สอน</label>
+                        <input type="text" id="teacherSubject" placeholder="กรอกวิชาที่สอน">
+                    </div>
+                    <div class="form-group">
+                        <label for="userEmail">อีเมล</label>
+                        <input type="email" id="userEmail" placeholder="กรอกอีเมล">
+                    </div>
+                    <div class="alert" id="addUserAlert" style="display: none;"></div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary modal-close">ยกเลิก</button>
+                    <button class="btn" id="saveUserBtn">บันทึกผู้ใช้</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Import Students Modal -->
+        <div id="importModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 class="modal-title">นำเข้าข้อมูลนักเรียนจาก Excel</h3>
+                    <button class="modal-close">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="excelFile">เลือกไฟล์ Excel (.xlsx)</label>
+                        <input type="file" id="excelFile" accept=".xlsx">
+                    </div>
+                    <div class="alert alert-info">
+                        <p><strong>คำแนะนำ:</strong></p>
+                        <p>ไฟล์ Excel ควรมีโครงสร้างตามรูปแบบต่อไปนี้:</p>
+                        <ul>
+                            <li>คอลัมน์ A: รหัสนักเรียน</li>
+                            <li>คอลัมน์ B: ชื่อ</li>
+                            <li>คอลัมน์ C: นามสกุล</li>
+                            <li>คอลัมน์ D: วันเกิด (รูปแบบ DD/MM/YYYY)</li>
+                            <li>คอลัมน์ E: ห้องเรียน</li>
+                        </ul>
+                        <p>ระบบจะใช้วันเกิดเป็นรหัสผ่านเริ่มต้นสำหรับนักเรียน (รูปแบบ DDMMYYYY)</p>
+                    </div>
+                    <div id="importPreview" style="display: none;">
+                        <h4>ตัวอย่างข้อมูลที่จะนำเข้า</h4>
+                        <div class="table-responsive">
+                            <table id="previewTable">
+                                <thead>
+                                    <tr>
+                                        <th>รหัสนักเรียน</th>
+                                        <th>ชื่อ</th>
+                                        <th>นามสกุล</th>
+                                        <th>วันเกิด</th>
+                                        <th>ห้องเรียน</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="alert" id="importAlert" style="display: none;"></div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary modal-close">ยกเลิก</button>
+                    <button class="btn" id="importBtn" disabled>นำเข้าข้อมูล</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Notification Container -->
+        <div class="notification-container" id="notificationContainer"></div>
+    </div>
+
+    <script>
+        // SHA256 Hash Function
+        async function sha256(message) {
+            // Encode as UTF-8
+            const msgBuffer = new TextEncoder().encode(message);
+            
+            // Hash the message
+            const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+            
+            // Convert to hex string
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+            
+            return hashHex;
+        }
+
+        // Sample Database
+        const database = {
+            users: [
+                { 
+                    id: 1, 
+                    username: 'admin', 
+                    password: '8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918', // admin123 in SHA256
+                    role: 'admin', 
+                    fullName: 'Admin User', 
+                    email: 'admin@school.ac.th', 
+                    phone: '0812345678',
+                    avatar: null
+                },
+                { 
+                    id: 2, 
+                    username: 'teacher1', 
+                    password: '8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92', // 123456 in SHA256
+                    role: 'teacher', 
+                    fullName: 'ครูสมชาย ใจดี', 
+                    email: 'teacher1@school.ac.th', 
+                    phone: '0823456789',
+                    subject: 'คณิตศาสตร์',
+                    avatar: null
+                },
+                { 
+                    id: 3, 
+                    username: 'student1', 
+                    password: '15e2b0d3c33891ebb0f1ef609ec419420c20e320ce94c65fbc8c3312448eb225', // 01012000 in SHA256 (01/01/2000)
+                    role: 'student', 
+                    fullName: 'นักเรียนหนึ่ง ดีมาก', 
+                    email: 'student1@school.ac.th', 
+                    phone: '0834567890',
+                    studentId: 'S001',
+                    class: 'ม.1/1',
+                    avatar: null
+                }
+            ],
+            subjects: [
+                { id: 'math', name: 'คณิตศาสตร์', teacher: 2 },
+                { id: 'sci', name: 'วิทยาศาสตร์', teacher: 2 },
+                { id: 'thai', name: 'ภาษาไทย', teacher: null },
+                { id: 'eng', name: 'ภาษาอังกฤษ', teacher: null }
+            ],
+            classes: ['ม.1/1', 'ม.1/2', 'ม.2/1', 'ม.2/2', 'ม.3/1', 'ม.3/2'],
+            attendance: [
+                { 
+                    id: 1, 
+                    studentId: 3, 
+                    subject: 'math', 
+                    date: '2023-05-01', 
+                    status: 'present', 
+                    time: '08:30',
+                    checkedBy: 'qr',
+                    qrCode: 'math-20230501-0830'
+                },
+                { 
+                    id: 2, 
+                    studentId: 3, 
+                    subject: 'sci', 
+                    date: '2023-05-02', 
+                    status: 'late', 
+                    time: '09:15',
+                    checkedBy: 'manual',
+                    note: 'รถติด'
+                }
+            ],
+            notifications: [
+                {
+                    id: 1,
+                    title: 'ประกาศจากโรงเรียน',
+                    message: 'วันจันทร์ที่ 8 พฤษภาคม เป็นวันหยุดพิเศษ',
+                    type: 'school',
+                    date: '2023-05-05 14:30',
+                    read: false
+                },
+                {
+                    id: 2,
+                    title: 'การบ้านคณิตศาสตร์',
+                    message: 'ส่งการบ้านบทที่ 5 ภายในวันศุกร์นี้',
+                    type: 'subject',
+                    subject: 'math',
+                    date: '2023-05-06 10:15',
+                    read: false
+                },
+                {
+                    id: 3,
+                    title: 'แจ้งเตือนส่วนตัว',
+                    message: 'คุณมีคาบเรียนวิทยาศาสตร์ในอีก 10 นาที',
+                    type: 'personal',
+                    userId: 3,
+                    date: '2023-05-07 08:50',
+                    read: false
+                }
+            ]
+        };
+
+        // Save database to localStorage
+        localStorage.setItem('attendanceSystemDB', JSON.stringify(database));
+
+        // App State
+        let currentUser = null;
+        let activeQRCode = null;
+        let qrInterval = null;
+        let qrExpireTime = 5 * 60; // 5 minutes in seconds
+
+        // DOM Elements
+        const loginPage = document.getElementById('loginPage');
+        const appContainer = document.getElementById('appContainer');
+        const loginBtn = document.getElementById('loginBtn');
+        const loginUsername = document.getElementById('loginUsername');
+        const loginPassword = document.getElementById('loginPassword');
+        const sidebarMenu = document.getElementById('sidebarMenu');
+        const mainContent = document.getElementById('mainContent');
+        const dynamicContent = document.getElementById('dynamicContent');
+        const pageTitle = document.getElementById('pageTitle');
+        const userAvatar = document.getElementById('userAvatar');
+        const avatarInitial = document.getElementById('avatarInitial');
+        const notificationBadge = document.getElementById('notificationBadge');
+        const profileModal = document.getElementById('profileModal');
+        const changePasswordModal = document.getElementById('changePasswordModal');
+        const qrModal = document.getElementById('qrModal');
+        const notificationModal = document.getElementById('notificationModal');
+        const addUserModal = document.getElementById('addUserModal');
+        const importModal = document.getElementById('importModal');
+        const notificationContainer = document.getElementById('notificationContainer');
+
+        // Initialize the app
+        function init() {
+            // Check if user is already logged in
+            const loggedInUser = localStorage.getItem('attendanceSystemUser');
+            if (loggedInUser) {
+                currentUser = JSON.parse(loggedInUser);
+                showApp();
+            } else {
+                showLogin();
+            }
+
+            // Event listeners
+            setupEventListeners();
+        }
+
+        // Show login page
+        function showLogin() {
+            loginPage.style.display = 'flex';
+            appContainer.style.display = 'none';
+        }
+
+        // Show main app
+        function showApp() {
+            loginPage.style.display = 'none';
+            appContainer.style.display = 'block';
+            
+            // Update UI based on user role
+            updateUserUI();
+            
+            // Load dashboard by default
+            loadPage('dashboard');
+            
+            // Check for notifications
+            updateNotificationBadge();
+        }
+
+        // Update UI based on user role
+        function updateUserUI() {
+            // Set avatar initial
+            const initials = currentUser.fullName.split(' ').map(name => name[0]).join('');
+            avatarInitial.textContent = initials;
+            
+            // Update modal avatar
+            document.getElementById('modalAvatarInitial').textContent = initials;
+            document.getElementById('modalUserName').textContent = currentUser.fullName;
+            document.getElementById('modalUserRole').textContent = getRoleName(currentUser.role);
+            document.getElementById('modalFullName').value = currentUser.fullName;
+            document.getElementById('modalEmail').value = currentUser.email || '';
+            document.getElementById('modalPhone').value = currentUser.phone || '';
+            
+            // Update sidebar based on role
+            updateSidebarMenu();
+        }
+
+        // Get role name in Thai
+        function getRoleName(role) {
+            switch (role) {
+                case 'admin': return 'ผู้ดูแลระบบ';
+                case 'teacher': return 'ครู';
+                case 'student': return 'นักเรียน';
+                default: return 'ผู้ใช้';
+            }
+        }
+
+        // Update sidebar menu based on user role
+        function updateSidebarMenu() {
+            sidebarMenu.innerHTML = '';
+            
+            if (currentUser.role === 'admin') {
+                sidebarMenu.innerHTML = `
+                    <li><a href="#" data-page="dashboard"><i class="fas fa-tachometer-alt"></i> แดชบอร์ด</a></li>
+                    <li><a href="#" data-page="users"><i class="fas fa-users-cog"></i> จัดการผู้ใช้</a></li>
+                    <li><a href="#" data-page="subjects"><i class="fas fa-book"></i> จัดการวิชาเรียน</a></li>
+                    <li><a href="#" data-page="classes"><i class="fas fa-school"></i> จัดการห้องเรียน</a></li>
+                    <li><a href="#" data-page="attendance"><i class="fas fa-clipboard-list"></i> ดูประวัติเช็คชื่อ</a></li>
+                    <li><a href="#" data-page="reports"><i class="fas fa-chart-pie"></i> รายงานสถิติ</a></li>
+                    <li><a href="#" data-page="notifications"><i class="fas fa-bell"></i> จัดการแจ้งเตือน</a></li>
+                    <li><a href="#" id="importStudentsBtn"><i class="fas fa-file-import"></i> นำเข้านักเรียน</a></li>
+                `;
+            } else if (currentUser.role === 'teacher') {
+                sidebarMenu.innerHTML = `
+                    <li><a href="#" data-page="dashboard"><i class="fas fa-tachometer-alt"></i> แดชบอร์ด</a></li>
+                    <li><a href="#" data-page="attendance"><i class="fas fa-qrcode"></i> เช็คชื่อด้วย QR</a></li>
+                    <li><a href="#" data-page="manualAttendance"><i class="fas fa-edit"></i> เช็คชื่อแบบ manual</a></li>
+                    <li><a href="#" data-page="mySubjects"><i class="fas fa-book"></i> วิชาที่สอน</a></li>
+                    <li><a href="#" data-page="reports"><i class="fas fa-chart-line"></i> รายงานสถิติ</a></li>
+                    <li><a href="#" data-page="myStudents"><i class="fas fa-user-graduate"></i> นักเรียนของฉัน</a></li>
+                `;
+            } else if (currentUser.role === 'student') {
+                sidebarMenu.innerHTML = `
+                    <li><a href="#" data-page="dashboard"><i class="fas fa-tachometer-alt"></i> แดชบอร์ด</a></li>
+                    <li><a href="#" data-page="myAttendance"><i class="fas fa-clipboard-check"></i> ประวัติเช็คชื่อ</a></li>
+                    <li><a href="#" data-page="mySubjects"><i class="fas fa-book"></i> วิชาที่เรียน</a></li>
+                    <li><a href="#" data-page="profile"><i class="fas fa-user"></i> โปรไฟล์ของฉัน</a></li>
+                `;
+            }
+            
+            // Add event listeners to sidebar links
+            document.querySelectorAll('#sidebarMenu a').forEach(link => {
+                if (link.dataset.page) {
+                    link.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        loadPage(link.dataset.page);
+                    });
+                }
+            });
+            
+            // Add event listener for import students button
+            if (currentUser.role === 'admin') {
+                const importBtn = document.getElementById('importStudentsBtn');
+                if (importBtn) {
+                    importBtn.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        showImportModal();
+                    });
+                }
+            }
+        }
+
+        // Setup event listeners
+        function setupEventListeners() {
+            // Login button
+            loginBtn.addEventListener('click', handleLogin);
+            
+            // Allow login on Enter key
+            loginPassword.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    handleLogin();
+                }
+            });
+            
+            // Navigation links
+            document.querySelectorAll('[data-page]').forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    loadPage(link.dataset.page);
+                });
+            });
+            
+            // User avatar click
+            userAvatar.addEventListener('click', () => {
+                showProfileModal();
+            });
+            
+            // Modal close buttons
+            document.querySelectorAll('.modal-close').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    closeModal(btn.closest('.modal'));
+                });
+            });
+            
+            // Change password button
+            document.getElementById('changePasswordBtn').addEventListener('click', () => {
+                closeModal(profileModal);
+                showChangePasswordModal();
+            });
+            
+            // Save profile button
+            document.getElementById('saveProfileBtn').addEventListener('click', saveProfile);
+            
+            // Save password button
+            document.getElementById('savePasswordBtn').addEventListener('click', changePassword);
+            
+            // Avatar upload
+            document.getElementById('modalAvatarUpload').addEventListener('change', handleAvatarUpload);
+            
+            // QR Code subject change
+            document.getElementById('qrSubject').addEventListener('change', generateQRCode);
+            
+            // Refresh QR button
+            document.getElementById('refreshQrBtn').addEventListener('click', generateQRCode);
+            
+            // User role change
+            document.getElementById('userRole').addEventListener('change', toggleUserRoleFields);
+            
+            // Save user button
+            document.getElementById('saveUserBtn').addEventListener('click', saveUser);
+            
+            // Excel file import
+            document.getElementById('excelFile').addEventListener('change', handleExcelImport);
+            
+            // Import button
+            document.getElementById('importBtn').addEventListener('click', importStudents);
+        }
+
+        // Handle login
+        async function handleLogin() {
+            const username = loginUsername.value.trim();
+            const password = loginPassword.value.trim();
+            
+            if (!username || !password) {
+                showNotification('error', 'กรุณากรอกชื่อผู้ใช้และรหัสผ่าน');
+                return;
+            }
+            
+            // Hash the password
+            const hashedPassword = await sha256(password);
+            
+            // Find user in database
+            const db = getDatabase();
+            const user = db.users.find(u => u.username === username && u.password === hashedPassword);
+            
+            if (user) {
+                // Login successful
+                currentUser = user;
+                localStorage.setItem('attendanceSystemUser', JSON.stringify(user));
+                showApp();
+                showNotification('success', 'เข้าสู่ระบบสำเร็จ');
+            } else {
+                // Login failed
+                showNotification('error', 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง');
+            }
+        }
+
+        // Load page content
+        function loadPage(page) {
+            // Update active nav link
+            document.querySelectorAll('.nav-links a').forEach(link => {
+                link.classList.remove('active');
+                if (link.dataset.page === page) {
+                    link.classList.add('active');
+                }
+            });
+            
+            // Update active sidebar link
+            document.querySelectorAll('#sidebarMenu a').forEach(link => {
+                if (link.dataset.page) {
+                    link.classList.remove('active');
+                    if (link.dataset.page === page) {
+                        link.classList.add('active');
+                    }
+                }
+            });
+            
+            // Set page title
+            let title = '';
+            switch (page) {
+                case 'dashboard': title = 'แดชบอร์ด'; break;
+                case 'attendance': title = 'ระบบเช็คชื่อ'; break;
+                case 'reports': title = 'รายงานสถิติ'; break;
+                case 'users': title = 'จัดการผู้ใช้'; break;
+                case 'subjects': title = 'จัดการวิชาเรียน'; break;
+                case 'classes': title = 'จัดการห้องเรียน'; break;
+                case 'notifications': title = 'จัดการแจ้งเตือน'; break;
+                case 'myAttendance': title = 'ประวัติเช็คชื่อของฉัน'; break;
+                case 'mySubjects': title = 'วิชาที่เรียน'; break;
+                case 'profile': title = 'โปรไฟล์ของฉัน'; break;
+                case 'manualAttendance': title = 'เช็คชื่อนักเรียน'; break;
+                case 'myStudents': title = 'นักเรียนของฉัน'; break;
+                default: title = 'หน้าไม่พบ'; break;
+            }
+            pageTitle.textContent = title;
+            
+            // Load page content
+            let content = '';
+            switch (page) {
+                case 'dashboard':
+                    content = loadDashboard();
+                    break;
+                case 'attendance':
+                    if (currentUser.role === 'teacher') {
+                        content = loadTeacherAttendance();
+                    } else {
+                        content = loadAttendanceList();
+                    }
+                    break;
+                case 'reports':
+                    content = loadReports();
+                    break;
+                case 'users':
+                    content = loadUsers();
+                    break;
+                case 'subjects':
+                    content = loadSubjects();
+                    break;
+                case 'classes':
+                    content = loadClasses();
+                    break;
+                case 'notifications':
+                    content = loadNotifications();
+                    break;
+                case 'myAttendance':
+                    content = loadStudentAttendance();
+                    break;
+                case 'mySubjects':
+                    content = loadStudentSubjects();
+                    break;
+                case 'profile':
+                    content = loadStudentProfile();
+                    break;
+                case 'manualAttendance':
+                    content = loadManualAttendance();
+                    break;
+                case 'myStudents':
+                    content = loadTeacherStudents();
+                    break;
+                default:
+                    content = '<p>หน้าไม่พบ</p>';
+                    break;
+            }
+            
+            dynamicContent.innerHTML = content;
+            
+            // Initialize any page-specific functionality
+            initPage(page);
+        }
+
+        // Initialize page-specific functionality
+        function initPage(page) {
+            switch (page) {
+                case 'dashboard':
+                    initDashboard();
+                    break;
+                case 'reports':
+                    initReports();
+                    break;
+                case 'manualAttendance':
+                    initManualAttendance();
+                    break;
+            }
+        }
+
+        // Load dashboard content
+        function loadDashboard() {
+            let content = '';
+            
+            if (currentUser.role === 'admin') {
+                const db = getDatabase();
+                const totalStudents = db.users.filter(u => u.role === 'student').length;
+                const totalTeachers = db.users.filter(u => u.role === 'teacher').length;
+                const totalSubjects = db.subjects.length;
+                const today = new Date().toISOString().split('T')[0];
+                const todayAttendance = db.attendance.filter(a => a.date === today).length;
+                
+                content = `
+                    <div class="dashboard-cards">
+                        <div class="card" data-page="users">
+                            <div class="card-icon">
+                                <i class="fas fa-users"></i>
+                            </div>
+                            <h3 class="card-title">นักเรียนทั้งหมด</h3>
+                            <div class="card-value">${totalStudents}</div>
+                        </div>
+                        <div class="card" data-page="users">
+                            <div class="card-icon">
+                                <i class="fas fa-chalkboard-teacher"></i>
+                            </div>
+                            <h3 class="card-title">ครูทั้งหมด</h3>
+                            <div class="card-value">${totalTeachers}</div>
+                        </div>
+                        <div class="card" data-page="subjects">
+                            <div class="card-icon">
+                                <i class="fas fa-book"></i>
+                            </div>
+                            <h3 class="card-title">วิชาเรียน</h3>
+                            <div class="card-value">${totalSubjects}</div>
+                        </div>
+                        <div class="card" data-page="attendance">
+                            <div class="card-icon">
+                                <i class="fas fa-clipboard-check"></i>
+                            </div>
+                            <h3 class="card-title">เช็คชื่อวันนี้</h3>
+                            <div class="card-value">${todayAttendance}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="chart-container">
+                        <canvas id="attendanceChart"></canvas>
+                    </div>
+                    
+                    <h3>แจ้งเตือนล่าสุด</h3>
+                    <div class="table-responsive">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>หัวข้อ</th>
+                                    <th>ข้อความ</th>
+                                    <th>วันที่</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recentNotifications">
+                                <!-- Notifications will be loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+            } else if (currentUser.role === 'teacher') {
+                const db = getDatabase();
+                const mySubjects = db.subjects.filter(s => s.teacher === currentUser.id);
+                const myStudents = db.users.filter(u => u.role === 'student').length; // Simplified
+                const today = new Date().toISOString().split('T')[0];
+                const todayAttendance = db.attendance.filter(a => 
+                    a.date === today && 
+                    mySubjects.some(s => s.id === a.subject)
+                ).length;
+                
+                content = `
+                    <div class="dashboard-cards">
+                        <div class="card" data-page="mySubjects">
+                            <div class="card-icon">
+                                <i class="fas fa-book"></i>
+                            </div>
+                            <h3 class="card-title">วิชาที่สอน</h3>
+                            <div class="card-value">${mySubjects.length}</div>
+                        </div>
+                        <div class="card" data-page="myStudents">
+                            <div class="card-icon">
+                                <i class="fas fa-user-graduate"></i>
+                            </div>
+                            <h3 class="card-title">นักเรียน</h3>
+                            <div class="card-value">${myStudents}</div>
+                        </div>
+                        <div class="card" data-page="attendance">
+                            <div class="card-icon">
+                                <i class="fas fa-clipboard-check"></i>
+                            </div>
+                            <h3 class="card-title">เช็คชื่อวันนี้</h3>
+                            <div class="card-value">${todayAttendance}</div>
+                        </div>
+                        <div class="card" id="generateQrBtn">
+                            <div class="card-icon">
+                                <i class="fas fa-qrcode"></i>
+                            </div>
+                            <h3 class="card-title">QR เช็คชื่อ</h3>
+                            <div class="card-value">สร้างใหม่</div>
+                        </div>
+                    </div>
+                    
+                    <div class="chart-container">
+                        <canvas id="attendanceChart"></canvas>
+                    </div>
+                    
+                    <h3>ตารางสอนวันนี้</h3>
+                    <div class="table-responsive">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>วิชา</th>
+                                    <th>เวลา</th>
+                                    <th>ห้องเรียน</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>คณิตศาสตร์</td>
+                                    <td>08:30 - 10:00</td>
+                                    <td>ม.1/1</td>
+                                </tr>
+                                <tr>
+                                    <td>วิทยาศาสตร์</td>
+                                    <td>10:30 - 12:00</td>
+                                    <td>ม.2/2</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+            } else if (currentUser.role === 'student') {
+                const db = getDatabase();
+                const mySubjects = ['math', 'sci', 'thai', 'eng']; // Simplified
+                const today = new Date().toISOString().split('T')[0];
+                const todayAttendance = db.attendance.filter(a => 
+                    a.date === today && 
+                    a.studentId === currentUser.id
+                );
+                
+                const presentCount = todayAttendance.filter(a => a.status === 'present').length;
+                const lateCount = todayAttendance.filter(a => a.status === 'late').length;
+                const absentCount = mySubjects.length - presentCount - lateCount;
+                
+                content = `
+                    <div class="dashboard-cards">
+                        <div class="card" data-page="mySubjects">
+                            <div class="card-icon">
+                                <i class="fas fa-book"></i>
+                            </div>
+                            <h3 class="card-title">วิชาที่เรียน</h3>
+                            <div class="card-value">${mySubjects.length}</div>
+                        </div>
+                        <div class="card">
+                            <div class="card-icon">
+                                <i class="fas fa-check-circle"></i>
+                            </div>
+                            <h3 class="card-title">มาเรียน</h3>
+                            <div class="card-value">${presentCount}</div>
+                        </div>
+                        <div class="card">
+                            <div class="card-icon">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                            <h3 class="card-title">มาสาย</h3>
+                            <div class="card-value">${lateCount}</div>
+                        </div>
+                        <div class="card">
+                            <div class="card-icon">
+                                <i class="fas fa-times-circle"></i>
+                            </div>
+                            <h3 class="card-title">ขาดเรียน</h3>
+                            <div class="card-value">${absentCount}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="chart-container">
+                        <canvas id="attendanceChart"></canvas>
+                    </div>
+                    
+                    <h3>ตารางเรียนวันนี้</h3>
+                    <div class="table-responsive">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>วิชา</th>
+                                    <th>เวลา</th>
+                                    <th>ห้องเรียน</th>
+                                    <th>สถานะ</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>คณิตศาสตร์</td>
+                                    <td>08:30 - 10:00</td>
+                                    <td>ห้อง 201</td>
+                                    <td class="status-present">มาเรียน</td>
+                                </tr>
+                                <tr>
+                                    <td>ภาษาอังกฤษ</td>
+                                    <td>10:30 - 12:00</td>
+                                    <td>ห้อง 202</td>
+                                    <td class="status-late">มาสาย</td>
+                                </tr>
+                                <tr>
+                                    <td>วิทยาศาสตร์</td>
+                                    <td>13:00 - 14:30</td>
+                                    <td>ห้อง 203</td>
+                                    <td class="status-absent">ขาดเรียน</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+            }
+            
+            return content;
+        }
+
+        // Initialize dashboard
+        function initDashboard() {
+            // Set up card click events
+            document.querySelectorAll('.dashboard-cards .card').forEach(card => {
+                if (card.dataset.page) {
+                    card.addEventListener('click', () => {
+                        loadPage(card.dataset.page);
+                    });
+                }
+            });
+            
+            // Set up QR code button for teachers
+            if (currentUser.role === 'teacher') {
+                const qrBtn = document.getElementById('generateQrBtn');
+                if (qrBtn) {
+                    qrBtn.addEventListener('click', showQRModal);
+                }
+            }
+            
+            // Load recent notifications for admin
+            if (currentUser.role === 'admin') {
+                loadRecentNotifications();
+            }
+            
+            // Initialize chart
+            initAttendanceChart();
+        }
+
+        // Load recent notifications
+        function loadRecentNotifications() {
+            const db = getDatabase();
+            const recentNotifications = db.notifications
+                .sort((a, b) => new Date(b.date) - new Date(a.date))
+                .slice(0, 5);
+            
+            const notificationsList = document.getElementById('recentNotifications');
+            if (notificationsList) {
+                notificationsList.innerHTML = recentNotifications.map(notif => `
+                    <tr>
+                        <td>${notif.title}</td>
+                        <td>${notif.message}</td>
+                        <td>${formatDate(notif.date)}</td>
+                    </tr>
+                `).join('');
+            }
+        }
+
+        // Initialize attendance chart
+        function initAttendanceChart() {
+            const ctx = document.getElementById('attendanceChart');
+            if (!ctx) return;
+            
+            let labels = [];
+            let presentData = [];
+            let lateData = [];
+            let absentData = [];
+            
+            if (currentUser.role === 'admin') {
+                // Admin sees school-wide stats for the last 7 days
+                const db = getDatabase();
+                const today = new Date();
+                labels = Array.from({ length: 7 }, (_, i) => {
+                    const date = new Date(today);
+                    date.setDate(date.getDate() - (6 - i));
+                    return formatDate(date.toISOString().split('T')[0], 'short');
+                });
+                
+                presentData = labels.map(date => {
+                    const count = db.attendance.filter(a => 
+                        a.date === date && a.status === 'present'
+                    ).length;
+                    return count;
+                });
+                
+                lateData = labels.map(date => {
+                    const count = db.attendance.filter(a => 
+                        a.date === date && a.status === 'late'
+                    ).length;
+                    return count;
+                });
+                
+                absentData = labels.map(date => {
+                    // Simplified - assumes each student has 4 classes per day
+                    const totalStudents = db.users.filter(u => u.role === 'student').length;
+                    return (totalStudents * 4) - presentData[labels.indexOf(date)] - lateData[labels.indexOf(date)];
+                });
+            } else if (currentUser.role === 'teacher') {
+                // Teacher sees stats for their subjects for the last 7 days
+                const db = getDatabase();
+                const mySubjects = db.subjects.filter(s => s.teacher === currentUser.id);
+                const today = new Date();
+                labels = Array.from({ length: 7 }, (_, i) => {
+                    const date = new Date(today);
+                    date.setDate(date.getDate() - (6 - i));
+                    return formatDate(date.toISOString().split('T')[0], 'short');
+                });
+                
+                presentData = labels.map(date => {
+                    const count = db.attendance.filter(a => 
+                        a.date === date && 
+                        a.status === 'present' && 
+                        mySubjects.some(s => s.id === a.subject)
+                    ).length;
+                    return count;
+                });
+                
+                lateData = labels.map(date => {
+                    const count = db.attendance.filter(a => 
+                        a.date === date && 
+                        a.status === 'late' && 
+                        mySubjects.some(s => s.id === a.subject)
+                    ).length;
+                    return count;
+                });
+                
+                absentData = labels.map(date => {
+                    // Simplified - assumes each student has 1 class per subject per day
+                    const myStudents = db.users.filter(u => u.role === 'student').length;
+                    return (myStudents * mySubjects.length) - presentData[labels.indexOf(date)] - lateData[labels.indexOf(date)];
+                });
+            } else if (currentUser.role === 'student') {
+                // Student sees their own stats for the last 7 days
+                const db = getDatabase();
+                const today = new Date();
+                labels = Array.from({ length: 7 }, (_, i) => {
+                    const date = new Date(today);
+                    date.setDate(date.getDate() - (6 - i));
+                    return formatDate(date.toISOString().split('T')[0], 'short');
+                });
+                
+                presentData = labels.map(date => {
+                    const count = db.attendance.filter(a => 
+                        a.date === date && 
+                        a.studentId === currentUser.id && 
+                        a.status === 'present'
+                    ).length;
+                    return count;
+                });
+                
+                lateData = labels.map(date => {
+                    const count = db.attendance.filter(a => 
+                        a.date === date && 
+                        a.studentId === currentUser.id && 
+                        a.status === 'late'
+                    ).length;
+                    return count;
+                });
+                
+                absentData = labels.map(date => {
+                    // Simplified - assumes 4 classes per day
+                    return 4 - presentData[labels.indexOf(date)] - lateData[labels.indexOf(date)];
+                });
+            }
+            
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'มาเรียน',
+                            data: presentData,
+                            backgroundColor: '#2e7d32',
+                        },
+                        {
+                            label: 'มาสาย',
+                            data: lateData,
+                            backgroundColor: '#ffd600',
+                        },
+                        {
+                            label: 'ขาดเรียน',
+                            data: absentData,
+                            backgroundColor: '#f44336',
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        x: {
+                            stacked: true,
+                        },
+                        y: {
+                            stacked: true,
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+
+        // Load attendance list (for admin)
+        function loadAttendanceList() {
+            const db = getDatabase();
+            
+            return `
+                <div class="d-flex justify-between align-center mb-20">
+                    <h3>ประวัติการเช็คชื่อ</h3>
+                    <div>
+                        <button class="btn btn-yellow" id="exportAttendanceBtn">
+                            <i class="fas fa-file-export"></i> Export Excel
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="attendanceFilter">ค้นหา/กรองข้อมูล</label>
+                    <input type="text" id="attendanceFilter" placeholder="ค้นหาด้วยชื่อนักเรียน, วิชา, หรือวันที่">
+                </div>
+                
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>วันที่</th>
+                                <th>นักเรียน</th>
+                                <th>วิชา</th>
+                                <th>สถานะ</th>
+                                <th>เวลา</th>
+                                <th>วิธีเช็คชื่อ</th>
+                                <th>หมายเหตุ</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${db.attendance.map(record => {
+                                const student = db.users.find(u => u.id === record.studentId);
+                                const subject = db.subjects.find(s => s.id === record.subject);
+                                const statusClass = record.status === 'present' ? 'status-present' : 
+                                                  record.status === 'late' ? 'status-late' : 'status-absent';
+                                const statusText = record.status === 'present' ? 'มาเรียน' : 
+                                                 record.status === 'late' ? 'มาสาย' : 'ขาดเรียน';
+                                
+                                return `
+                                    <tr>
+                                        <td>${formatDate(record.date)}</td>
+                                        <td>${student ? student.fullName : 'ไม่พบข้อมูล'}</td>
+                                        <td>${subject ? subject.name : 'ไม่พบข้อมูล'}</td>
+                                        <td class="${statusClass}">${statusText}</td>
+                                        <td>${record.time || '-'}</td>
+                                        <td>${record.checkedBy === 'qr' ? 'QR Code' : 'Manual'}</td>
+                                        <td>${record.note || '-'}</td>
+                                    </tr>
+                                `;
+                            }).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        }
+
+        // Load teacher attendance page
+        function loadTeacherAttendance() {
+            return `
+                <div class="d-flex justify-between align-center mb-20">
+                    <h3>ระบบเช็คชื่อด้วย QR Code</h3>
+                    <div>
+                        <button class="btn btn-yellow" id="generateQrBtn">
+                            <i class="fas fa-qrcode"></i> สร้าง QR Code
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="alert alert-info">
+                    <p><strong>คำแนะนำ:</strong></p>
+                    <p>1. คลิกปุ่ม "สร้าง QR Code" เพื่อสร้าง QR Code สำหรับเช็คชื่อ</p>
+                    <p>2. เลือกวิชาที่ต้องการเช็คชื่อ</p>
+                    <p>3. แสดง QR Code ให้นักเรียนสแกนผ่านแอพในมือถือ</p>
+                    <p>4. ระบบจะบันทึกการเช็คชื่อโดยอัตโนมัติ</p>
+                </div>
+                
+                <h3>ประวัติการเช็คชื่อล่าสุด</h3>
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>วันที่</th>
+                                <th>วิชา</th>
+                                <th>นักเรียน</th>
+                                <th>สถานะ</th>
+                                <th>เวลา</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recentAttendance">
+                            <!-- Recent attendance will be loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        }
+
+        // Load reports page
+        function loadReports() {
+            let content = '';
+            
+            if (currentUser.role === 'admin') {
+                content = `
+                    <div class="d-flex justify-between align-center mb-20">
+                        <h3>รายงานสถิติการเช็คชื่อ</h3>
+                        <div>
+                            <button class="btn btn-yellow" id="exportReportBtn">
+                                <i class="fas fa-file-export"></i> Export Excel
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="reportType">ประเภทรายงาน</label>
+                        <select id="reportType" class="form-control">
+                            <option value="daily">รายวัน</option>
+                            <option value="weekly">รายสัปดาห์</option>
+                            <option value="monthly">รายเดือน</option>
+                            <option value="yearly">รายปี</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="reportDate">วันที่</label>
+                        <input type="date" id="reportDate" class="form-control">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="reportSubject">วิชา (เลือกทั้งหมดเพื่อดูทุกวิชา)</label>
+                        <select id="reportSubject" class="form-control">
+                            <option value="all">ทั้งหมด</option>
+                            <option value="math">คณิตศาสตร์</option>
+                            <option value="sci">วิทยาศาสตร์</option>
+                            <option value="thai">ภาษาไทย</option>
+                            <option value="eng">ภาษาอังกฤษ</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="reportClass">ห้องเรียน (เลือกทั้งหมดเพื่อดูทุกห้อง)</label>
+                        <select id="reportClass" class="form-control">
+                            <option value="all">ทั้งหมด</option>
+                            <option value="ม.1/1">ม.1/1</option>
+                            <option value="ม.1/2">ม.1/2</option>
+                            <option value="ม.2/1">ม.2/1</option>
+                            <option value="ม.2/2">ม.2/2</option>
+                            <option value="ม.3/1">ม.3/1</option>
+                            <option value="ม.3/2">ม.3/2</option>
+                        </select>
+                    </div>
+                    
+                    <button class="btn" id="generateReportBtn">สร้างรายงาน</button>
+                    
+                    <div class="chart-container mt-20">
+                        <canvas id="reportChart"></canvas>
+                    </div>
+                    
+                    <div class="table-responsive mt-20">
+                        <table id="reportTable">
+                            <thead>
+                                <tr>
+                                    <th>วันที่</th>
+                                    <th>วิชา</th>
+                                    <th>ห้องเรียน</th>
+                                    <th>มาเรียน</th>
+                                    <th>มาสาย</th>
+                                    <th>ขาดเรียน</th>
+                                    <th>ร้อยละมาเรียน</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Report data will be loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+            } else if (currentUser.role === 'teacher') {
+                content = `
+                    <div class="d-flex justify-between align-center mb-20">
+                        <h3>รายงานสถิติการเช็คชื่อ</h3>
+                        <div>
+                            <button class="btn btn-yellow" id="exportReportBtn">
+                                <i class="fas fa-file-export"></i> Export Excel
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="reportType">ประเภทรายงาน</label>
+                        <select id="reportType" class="form-control">
+                            <option value="daily">รายวัน</option>
+                            <option value="weekly">รายสัปดาห์</option>
+                            <option value="monthly">รายเดือน</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="reportSubject">วิชา</label>
+                        <select id="reportSubject" class="form-control">
+                            <option value="math">คณิตศาสตร์</option>
+                            <option value="sci">วิทยาศาสตร์</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="reportClass">ห้องเรียน</label>
+                        <select id="reportClass" class="form-control">
+                            <option value="ม.1/1">ม.1/1</option>
+                            <option value="ม.1/2">ม.1/2</option>
+                            <option value="ม.2/1">ม.2/1</option>
+                            <option value="ม.2/2">ม.2/2</option>
+                        </select>
+                    </div>
+                    
+                    <button class="btn" id="generateReportBtn">สร้างรายงาน</button>
+                    
+                    <div class="chart-container mt-20">
+                        <canvas id="reportChart"></canvas>
+                    </div>
+                    
+                    <div class="table-responsive mt-20">
+                        <table id="reportTable">
+                            <thead>
+                                <tr>
+                                    <th>วันที่</th>
+                                    <th>นักเรียน</th>
+                                    <th>มาเรียน</th>
+                                    <th>มาสาย</th>
+                                    <th>ขาดเรียน</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Report data will be loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+            } else if (currentUser.role === 'student') {
+                content = `
+                    <h3>สถิติการเช็คชื่อของฉัน</h3>
+                    
+                    <div class="form-group">
+                        <label for="reportMonth">เดือน</label>
+                        <select id="reportMonth" class="form-control">
+                            <option value="1">มกราคม</option>
+                            <option value="2">กุมภาพันธ์</option>
+                            <option value="3">มีนาคม</option>
+                            <option value="4">เมษายน</option>
+                            <option value="5">พฤษภาคม</option>
+                            <option value="6">มิถุนายน</option>
+                            <option value="7">กรกฎาคม</option>
+                            <option value="8">สิงหาคม</option>
+                            <option value="9">กันยายน</option>
+                            <option value="10">ตุลาคม</option>
+                            <option value="11">พฤศจิกายน</option>
+                            <option value="12">ธันวาคม</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="reportYear">ปี</label>
+                        <select id="reportYear" class="form-control">
+                            <option value="2023">2023</option>
+                            <option value="2022">2022</option>
+                        </select>
+                    </div>
+                    
+                    <button class="btn" id="generateReportBtn">สร้างรายงาน</button>
+                    
+                    <div class="chart-container mt-20">
+                        <canvas id="reportChart"></canvas>
+                    </div>
+                    
+                    <div class="table-responsive mt-20">
+                        <table id="reportTable">
+                            <thead>
+                                <tr>
+                                    <th>วันที่</th>
+                                    <th>วิชา</th>
+                                    <th>สถานะ</th>
+                                    <th>เวลา</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Report data will be loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+            }
+            
+            return content;
+        }
+
+        // Initialize reports
+        function initReports() {
+            // Set default date to today
+            const today = new Date().toISOString().split('T')[0];
+            const dateInput = document.getElementById('reportDate');
+            if (dateInput) {
+                dateInput.value = today;
+            }
+            
+            // Set up report generation button
+            const generateBtn = document.getElementById('generateReportBtn');
+            if (generateBtn) {
+                generateBtn.addEventListener('click', generateReport);
+            }
+            
+            // Set up export button
+            const exportBtn = document.getElementById('exportReportBtn');
+            if (exportBtn) {
+                exportBtn.addEventListener('click', exportReport);
+            }
+        }
+
+        // Generate report
+        function generateReport() {
+            // This would be connected to actual data in a real application
+            const ctx = document.getElementById('reportChart');
+            if (!ctx) return;
+            
+            // Sample data for demo
+            const labels = ['Week 1', 'Week 2', 'Week 3', 'Week 4'];
+            const presentData = [85, 82, 90, 88];
+            const lateData = [10, 12, 8, 9];
+            const absentData = [5, 6, 2, 3];
+            
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'มาเรียน',
+                            data: presentData,
+                            backgroundColor: '#2e7d32',
+                        },
+                        {
+                            label: 'มาสาย',
+                            data: lateData,
+                            backgroundColor: '#ffd600',
+                        },
+                        {
+                            label: 'ขาดเรียน',
+                            data: absentData,
+                            backgroundColor: '#f44336',
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        x: {
+                            stacked: true,
+                        },
+                        y: {
+                            stacked: true,
+                            beginAtZero: true,
+                            max: 100
+                        }
+                    }
+                }
+            });
+            
+            // Update report table (simplified for demo)
+            const tableBody = document.querySelector('#reportTable tbody');
+            if (tableBody) {
+                if (currentUser.role === 'admin') {
+                    tableBody.innerHTML = `
+                        <tr>
+                            <td>01/05/2023</td>
+                            <td>คณิตศาสตร์</td>
+                            <td>ม.1/1</td>
+                            <td>40</td>
+                            <td>5</td>
+                            <td>0</td>
+                            <td>88.9%</td>
+                        </tr>
+                        <tr>
+                            <td>01/05/2023</td>
+                            <td>วิทยาศาสตร์</td>
+                            <td>ม.1/1</td>
+                            <td>38</td>
+                            <td>7</td>
+                            <td>0</td>
+                            <td>84.4%</td>
+                        </tr>
+                        <tr>
+                            <td>02/05/2023</td>
+                            <td>คณิตศาสตร์</td>
+                            <td>ม.1/1</td>
+                            <td>42</td>
+                            <td>3</td>
+                            <td>0</td>
+                            <td>93.3%</td>
+                        </tr>
+                    `;
+                } else if (currentUser.role === 'teacher') {
+                    tableBody.innerHTML = `
+                        <tr>
+                            <td>01/05/2023</td>
+                            <td>นักเรียนหนึ่ง ดีมาก</td>
+                            <td>มาเรียน</td>
+                            <td>-</td>
+                            <td>-</td>
+                        </tr>
+                        <tr>
+                            <td>01/05/2023</td>
+                            <td>นักเรียนสอง ดีเด่น</td>
+                            <td>-</td>
+                            <td>มาสาย</td>
+                            <td>-</td>
+                        </tr>
+                        <tr>
+                            <td>02/05/2023</td>
+                            <td>นักเรียนหนึ่ง ดีมาก</td>
+                            <td>มาเรียน</td>
+                            <td>-</td>
+                            <td>-</td>
+                        </tr>
+                    `;
+                } else if (currentUser.role === 'student') {
+                    tableBody.innerHTML = `
+                        <tr>
+                            <td>01/05/2023</td>
+                            <td>คณิตศาสตร์</td>
+                            <td class="status-present">มาเรียน</td>
+                            <td>08:30</td>
+                        </tr>
+                        <tr>
+                            <td>01/05/2023</td>
+                            <td>ภาษาอังกฤษ</td>
+                            <td class="status-late">มาสาย</td>
+                            <td>09:15</td>
+                        </tr>
+                        <tr>
+                            <td>02/05/2023</td>
+                            <td>วิทยาศาสตร์</td>
+                            <td class="status-absent">ขาดเรียน</td>
+                            <td>-</td>
+                        </tr>
+                    `;
+                }
+            }
+        }
+
+        // Export report
+        function exportReport() {
+            // In a real app, this would generate an Excel/CSV file
+            showNotification('success', 'ส่งออกรายงานเรียบร้อยแล้ว (ตัวอย่าง)');
+        }
+
+        // Load users page (admin only)
+        function loadUsers() {
+            const db = getDatabase();
+            
+            return `
+                <div class="d-flex justify-between align-center mb-20">
+                    <h3>จัดการผู้ใช้ระบบ</h3>
+                    <div>
+                        <button class="btn" id="addUserBtn">
+                            <i class="fas fa-user-plus"></i> เพิ่มผู้ใช้
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="userFilter">ค้นหา/กรองข้อมูล</label>
+                    <input type="text" id="userFilter" placeholder="ค้นหาด้วยชื่อผู้ใช้หรือชื่อจริง">
+                </div>
+                
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ชื่อผู้ใช้</th>
+                                <th>ชื่อ-สกุล</th>
+                                <th>บทบาท</th>
+                                <th>อีเมล</th>
+                                <th>โทรศัพท์</th>
+                                <th>การกระทำ</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${db.users.map(user => `
+                                <tr>
+                                    <td>${user.username}</td>
+                                    <td>${user.fullName}</td>
+                                    <td>${getRoleName(user.role)}</td>
+                                    <td>${user.email || '-'}</td>
+                                    <td>${user.phone || '-'}</td>
+                                    <td>
+                                        <button class="btn btn-secondary btn-sm edit-user" data-id="${user.id}">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="btn btn-danger btn-sm delete-user" data-id="${user.id}">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                        ${user.role !== 'admin' ? `
+                                        <button class="btn btn-yellow btn-sm reset-password" data-id="${user.id}">
+                                            <i class="fas fa-key"></i>
+                                        </button>
+                                        ` : ''}
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        }
+
+        // Load subjects page (admin only)
+        function loadSubjects() {
+            const db = getDatabase();
+            
+            return `
+                <div class="d-flex justify-between align-center mb-20">
+                    <h3>จัดการวิชาเรียน</h3>
+                    <div>
+                        <button class="btn" id="addSubjectBtn">
+                            <i class="fas fa-book-medical"></i> เพิ่มวิชา
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>รหัสวิชา</th>
+                                <th>ชื่อวิชา</th>
+                                <th>ครูผู้สอน</th>
+                                <th>การกระทำ</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${db.subjects.map(subject => {
+                                const teacher = db.users.find(u => u.id === subject.teacher);
+                                return `
+                                    <tr>
+                                        <td>${subject.id}</td>
+                                        <td>${subject.name}</td>
+                                        <td>${teacher ? teacher.fullName : 'ยังไม่ได้กำหนด'}</td>
+                                        <td>
+                                            <button class="btn btn-secondary btn-sm edit-subject" data-id="${subject.id}">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button class="btn btn-danger btn-sm delete-subject" data-id="${subject.id}">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                `;
+                            }).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        }
+
+        // Load classes page (admin only)
+        function loadClasses() {
+            const db = getDatabase();
+            
+            return `
+                <div class="d-flex justify-between align-center mb-20">
+                    <h3>จัดการห้องเรียน</h3>
+                    <div>
+                        <button class="btn" id="addClassBtn">
+                            <i class="fas fa-school"></i> เพิ่มห้องเรียน
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ชื่อห้องเรียน</th>
+                                <th>จำนวนนักเรียน</th>
+                                <th>ครูประจำชั้น</th>
+                                <th>การกระทำ</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${db.classes.map(cls => {
+                                const students = db.users.filter(u => u.role === 'student' && u.class === cls).length;
+                                return `
+                                    <tr>
+                                        <td>${cls}</td>
+                                        <td>${students}</td>
+                                        <td>ยังไม่ได้กำหนด</td>
+                                        <td>
+                                            <button class="btn btn-secondary btn-sm edit-class" data-id="${cls}">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                `;
+                            }).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        }
+
+        // Load notifications page (admin only)
+        function loadNotifications() {
+            const db = getDatabase();
+            
+            return `
+                <div class="d-flex justify-between align-center mb-20">
+                    <h3>จัดการแจ้งเตือน</h3>
+                    <div>
+                        <button class="btn" id="addNotificationBtn">
+                            <i class="fas fa-bell"></i> ส่งแจ้งเตือนใหม่
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>หัวข้อ</th>
+                                <th>ข้อความ</th>
+                                <th>ประเภท</th>
+                                <th>วันที่ส่ง</th>
+                                <th>การกระทำ</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${db.notifications.map(notif => `
+                                <tr>
+                                    <td>${notif.title}</td>
+                                    <td>${notif.message}</td>
+                                    <td>${notif.type === 'school' ? 'ประกาศโรงเรียน' : 
+                                         notif.type === 'subject' ? 'ประกาศวิชาเรียน' : 'ส่วนตัว'}</td>
+                                    <td>${formatDate(notif.date)}</td>
+                                    <td>
+                                        <button class="btn btn-secondary btn-sm view-notification" data-id="${notif.id}">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <button class="btn btn-danger btn-sm delete-notification" data-id="${notif.id}">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        }
+
+        // Load student attendance page
+        function loadStudentAttendance() {
+            const db = getDatabase();
+            const myAttendance = db.attendance.filter(a => a.studentId === currentUser.id);
+            
+            return `
+                <h3>ประวัติการเช็คชื่อของฉัน</h3>
+                
+                <div class="form-group">
+                    <label for="attendanceFilter">ค้นหา/กรองข้อมูล</label>
+                    <input type="text" id="attendanceFilter" placeholder="ค้นหาด้วยวิชาหรือวันที่">
+                </div>
+                
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>วันที่</th>
+                                <th>วิชา</th>
+                                <th>สถานะ</th>
+                                <th>เวลา</th>
+                                <th>วิธีเช็คชื่อ</th>
+                                <th>หมายเหตุ</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${myAttendance.map(record => {
+                                const subject = db.subjects.find(s => s.id === record.subject);
+                                const statusClass = record.status === 'present' ? 'status-present' : 
+                                                  record.status === 'late' ? 'status-late' : 'status-absent';
+                                const statusText = record.status === 'present' ? 'มาเรียน' : 
+                                                 record.status === 'late' ? 'มาสาย' : 'ขาดเรียน';
+                                
+                                return `
+                                    <tr>
+                                        <td>${formatDate(record.date)}</td>
+                                        <td>${subject ? subject.name : 'ไม่พบข้อมูล'}</td>
+                                        <td class="${statusClass}">${statusText}</td>
+                                        <td>${record.time || '-'}</td>
+                                        <td>${record.checkedBy === 'qr' ? 'QR Code' : 'Manual'}</td>
+                                        <td>${record.note || '-'}</td>
+                                    </tr>
+                                `;
+                            }).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        }
+
+        // Load student subjects page
+        function loadStudentSubjects() {
+            const db = getDatabase();
+            // Simplified - assume student is enrolled in all subjects
+            const mySubjects = db.subjects;
+            
+            return `
+                <h3>วิชาที่ฉันเรียน</h3>
+                
+                <div class="dashboard-cards">
+                    ${mySubjects.map(subject => {
+                        const teacher = db.users.find(u => u.id === subject.teacher);
+                        const attendance = db.attendance.filter(a => 
+                            a.studentId === currentUser.id && 
+                            a.subject === subject.id
+                        );
+                        const presentCount = attendance.filter(a => a.status === 'present').length;
+                        const lateCount = attendance.filter(a => a.status === 'late').length;
+                        const absentCount = attendance.length - presentCount - lateCount;
+                        
+                        return `
+                            <div class="card">
+                                <div class="card-icon">
+                                    <i class="fas fa-book"></i>
+                                </div>
+                                <h3 class="card-title">${subject.name}</h3>
+                                <div class="card-value">${teacher ? teacher.fullName : 'ยังไม่มีครู'}</div>
+                                <div class="mt-10">
+                                    <small>มาเรียน: ${presentCount} | มาสาย: ${lateCount} | ขาด: ${absentCount}</small>
+                                </div>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+                
+                <h3 class="mt-20">ตารางเรียน</h3>
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>วัน</th>
+                                <th>เวลา</th>
+                                <th>วิชา</th>
+                                <th>ห้องเรียน</th>
+                                <th>ครูผู้สอน</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>จันทร์</td>
+                                <td>08:30 - 10:00</td>
+                                <td>คณิตศาสตร์</td>
+                                <td>ห้อง 201</td>
+                                <td>ครูสมชาย ใจดี</td>
+                            </tr>
+                            <tr>
+                                <td>จันทร์</td>
+                                <td>10:30 - 12:00</td>
+                                <td>ภาษาอังกฤษ</td>
+                                <td>ห้อง 202</td>
+                                <td>ครูสมหญิง น่ารัก</td>
+                            </tr>
+                            <tr>
+                                <td>อังคาร</td>
+                                <td>08:30 - 10:00</td>
+                                <td>วิทยาศาสตร์</td>
+                                <td>ห้อง 203</td>
+                                <td>ครูสมชาย ใจดี</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        }
+
+        // Load student profile page
+        function loadStudentProfile() {
+            const db = getDatabase();
+            const student = db.users.find(u => u.id === currentUser.id);
+            
+            return `
+                <div class="profile-container">
+                    <div class="profile-sidebar">
+                        <div class="profile-card">
+                            <div class="profile-avatar">
+                                ${student.avatar ? 
+                                    `<img src="${student.avatar}" alt="${student.fullName}">` : 
+                                    `<span>${student.fullName.split(' ').map(name => name[0]).join('')}</span>`
+                                }
+                            </div>
+                            <h3 class="profile-name">${student.fullName}</h3>
+                            <p class="profile-role">นักเรียน</p>
+                            <button class="btn btn-yellow w-100" id="changePasswordBtn">เปลี่ยนรหัสผ่าน</button>
+                        </div>
+                        
+                        <div class="profile-card">
+                            <h3>ข้อมูลพื้นฐาน</h3>
+                            <div class="profile-details">
+                                <p><i class="fas fa-id-card"></i> รหัสนักเรียน: ${student.studentId || '-'}</p>
+                                <p><i class="fas fa-school"></i> ห้องเรียน: ${student.class || '-'}</p>
+                                <p><i class="fas fa-envelope"></i> อีเมล: ${student.email || '-'}</p>
+                                <p><i class="fas fa-phone"></i> โทรศัพท์: ${student.phone || '-'}</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="profile-content">
+                        <h3>แก้ไขโปรไฟล์</h3>
+                        <div class="form-group">
+                            <label for="profileFullName">ชื่อ-สกุล</label>
+                            <input type="text" id="profileFullName" value="${student.fullName}">
+                        </div>
+                        <div class="form-group">
+                            <label for="profileEmail">อีเมล</label>
+                            <input type="email" id="profileEmail" value="${student.email || ''}">
+                        </div>
+                        <div class="form-group">
+                            <label for="profilePhone">โทรศัพท์</label>
+                            <input type="tel" id="profilePhone" value="${student.phone || ''}">
+                        </div>
+                        <div class="form-group">
+                            <label for="profileAvatar">รูปโปรไฟล์</label>
+                            <input type="file" id="profileAvatar" accept="image/*">
+                        </div>
+                        <div class="text-right">
+                            <button class="btn" id="saveProfileBtn">บันทึกการเปลี่ยนแปลง</button>
+                        </div>
+                        
+                        <h3 class="mt-20">ประวัติการเข้าเรียน</h3>
+                        <div class="chart-container" style="height: 300px;">
+                            <canvas id="profileChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Load manual attendance page (for teachers)
+        function loadManualAttendance() {
+            const db = getDatabase();
+            const myStudents = db.users.filter(u => u.role === 'student'); // Simplified
+            
+            return `
+                <div class="d-flex justify-between align-center mb-20">
+                    <h3>เช็คชื่อนักเรียนแบบ Manual</h3>
+                    <div>
+                        <button class="btn btn-yellow" id="saveAttendanceBtn">
+                            <i class="fas fa-save"></i> บันทึกการเช็คชื่อ
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="manualSubject">วิชา</label>
+                    <select id="manualSubject" class="form-control">
+                        <option value="">-- เลือกวิชา --</option>
+                        <option value="math">คณิตศาสตร์</option>
+                        <option value="sci">วิทยาศาสตร์</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="manualDate">วันที่</label>
+                    <input type="date" id="manualDate" class="form-control" value="${new Date().toISOString().split('T')[0]}">
+                </div>
+                
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>รหัสนักเรียน</th>
+                                <th>ชื่อ-สกุล</th>
+                                <th>ห้องเรียน</th>
+                                <th>สถานะ</th>
+                                <th>หมายเหตุ</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${myStudents.map(student => `
+                                <tr>
+                                    <td>${student.studentId || '-'}</td>
+                                    <td>${student.fullName}</td>
+                                    <td>${student.class || '-'}</td>
+                                    <td>
+                                        <select class="attendance-status" data-student="${student.id}">
+                                            <option value="present">มาเรียน</option>
+                                            <option value="late">มาสาย</option>
+                                            <option value="absent">ขาดเรียน</option>
+                                        </select>
+                                    </td>
+                                    <td>
+                                        <input type="text" class="attendance-note" data-student="${student.id}" placeholder="หมายเหตุ (ถ้ามี)">
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        }
+
+        // Initialize manual attendance page
+        function initManualAttendance() {
+            const saveBtn = document.getElementById('saveAttendanceBtn');
+            if (saveBtn) {
+                saveBtn.addEventListener('click', saveManualAttendance);
+            }
+        }
+
+        // Save manual attendance
+        function saveManualAttendance() {
+            const subject = document.getElementById('manualSubject').value;
+            const date = document.getElementById('manualDate').value;
+            
+            if (!subject) {
+                showNotification('error', 'กรุณาเลือกวิชา');
+                return;
+            }
+            
+            if (!date) {
+                showNotification('error', 'กรุณาเลือกวันที่');
+                return;
+            }
+            
+            // Get all attendance records
+            const statusElements = document.querySelectorAll('.attendance-status');
+            const noteElements = document.querySelectorAll('.attendance-note');
+            
+            const db = getDatabase();
+            let count = 0;
+            
+            statusElements.forEach((select, index) => {
+                const studentId = parseInt(select.dataset.student);
+                const status = select.value;
+                const note = noteElements[index].value;
+                
+                // Add or update attendance record
+                const existingIndex = db.attendance.findIndex(a => 
+                    a.studentId === studentId && 
+                    a.subject === subject && 
+                    a.date === date
+                );
+                
+                if (existingIndex >= 0) {
+                    db.attendance[existingIndex].status = status;
+                    db.attendance[existingIndex].note = note;
+                    db.attendance[existingIndex].checkedBy = 'manual';
+                } else {
+                    db.attendance.push({
+                        id: db.attendance.length + 1,
+                        studentId,
+                        subject,
+                        date,
+                        status,
+                        note,
+                        checkedBy: 'manual',
+                        time: new Date().toTimeString().substring(0, 5)
+                    });
+                }
+                
+                count++;
+            });
+            
+            // Save to database
+            saveDatabase(db);
+            
+            showNotification('success', `บันทึกการเช็คชื่อเรียบร้อย ${count} รายการ`);
+        }
+
+        // Load teacher students page
+        function loadTeacherStudents() {
+            const db = getDatabase();
+            const myStudents = db.users.filter(u => u.role === 'student'); // Simplified
+            
+            return `
+                <h3>นักเรียนของฉัน</h3>
+                
+                <div class="form-group">
+                    <label for="studentFilter">ค้นหา/กรองข้อมูล</label>
+                    <input type="text" id="studentFilter" placeholder="ค้นหาด้วยชื่อหรือรหัสนักเรียน">
+                </div>
+                
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>รหัสนักเรียน</th>
+                                <th>ชื่อ-สกุล</th>
+                                <th>ห้องเรียน</th>
+                                <th>มาเรียน</th>
+                                <th>มาสาย</th>
+                                <th>ขาดเรียน</th>
+                                <th>การกระทำ</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${myStudents.map(student => {
+                                const attendance = db.attendance.filter(a => 
+                                    a.studentId === student.id && 
+                                    ['math', 'sci'].includes(a.subject) // Simplified for demo
+                                );
+                                const presentCount = attendance.filter(a => a.status === 'present').length;
+                                const lateCount = attendance.filter(a => a.status === 'late').length;
+                                const absentCount = attendance.length - presentCount - lateCount;
+                                
+                                return `
+                                    <tr>
+                                        <td>${student.studentId || '-'}</td>
+                                        <td>${student.fullName}</td>
+                                        <td>${student.class || '-'}</td>
+                                        <td>${presentCount}</td>
+                                        <td>${lateCount}</td>
+                                        <td>${absentCount}</td>
+                                        <td>
+                                            <button class="btn btn-secondary btn-sm view-student" data-id="${student.id}">
+                                                <i class="fas fa-eye"></i> ดูประวัติ
+                                            </button>
+                                        </td>
+                                    </tr>
+                                `;
+                            }).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        }
+
+        // Show profile modal
+        function showProfileModal() {
+            document.getElementById('modalFullName').value = currentUser.fullName;
+            document.getElementById('modalEmail').value = currentUser.email || '';
+            document.getElementById('modalPhone').value = currentUser.phone || '';
+            
+            // Set avatar
+            const modalAvatar = document.getElementById('modalAvatar');
+            if (currentUser.avatar) {
+                modalAvatar.innerHTML = `<img src="${currentUser.avatar}" alt="${currentUser.fullName}">`;
+            } else {
+                const initials = currentUser.fullName.split(' ').map(name => name[0]).join('');
+                modalAvatar.innerHTML = `<span>${initials}</span>`;
+            }
+            
+            openModal(profileModal);
+        }
+
+        // Show change password modal
+        function showChangePasswordModal() {
+            document.getElementById('currentPassword').value = '';
+            document.getElementById('newPassword').value = '';
+            document.getElementById('confirmPassword').value = '';
+            document.getElementById('passwordAlert').style.display = 'none';
+            
+            openModal(changePasswordModal);
+        }
+
+        // Show QR code modal
+        function showQRModal() {
+            document.getElementById('qrSubject').value = '';
+            document.getElementById('qrCode').innerHTML = '';
+            document.getElementById('qrExpireTime').textContent = '5:00';
+            
+            openModal(qrModal);
+        }
+
+        // Show import modal
+        function showImportModal() {
+            document.getElementById('excelFile').value = '';
+            document.getElementById('importPreview').style.display = 'none';
+            document.getElementById('importBtn').disabled = true;
+            document.getElementById('importAlert').style.display = 'none';
+            
+            openModal(importModal);
+        }
+
+        // Open modal
+        function openModal(modal) {
+            modal.style.display = 'flex';
+        }
+
+        // Close modal
+        function closeModal(modal) {
+            modal.style.display = 'none';
+            
+            // Clear QR code interval if closing QR modal
+            if (modal.id === 'qrModal' && qrInterval) {
+                clearInterval(qrInterval);
+                qrInterval = null;
+                activeQRCode = null;
+            }
+        }
+
+        // Generate QR code
+        function generateQRCode() {
+            const subject = document.getElementById('qrSubject').value;
+            
+            if (!subject) {
+                showNotification('error', 'กรุณาเลือกวิชา');
+                return;
+            }
+            
+            // Generate unique QR code data
+            const now = new Date();
+            const qrData = `${subject}-${now.getFullYear()}${(now.getMonth()+1).toString().padStart(2, '0')}${now.getDate().toString().padStart(2, '0')}-${now.getHours()}${now.getMinutes()}`;
+            activeQRCode = qrData;
+            
+            // Display QR code
+            const qrElement = document.getElementById('qrCode');
+            qrElement.innerHTML = '';
+            QRCode.toCanvas(qrElement, qrData, { width: 200 }, (error) => {
+                if (error) {
+                    console.error('Error generating QR code:', error);
+                    showNotification('error', 'เกิดข้อผิดพลาดในการสร้าง QR Code');
+                }
+            });
+            
+            // Start countdown
+            qrExpireTime = 5 * 60; // 5 minutes in seconds
+            updateQRExpireTime();
+            
+            if (qrInterval) clearInterval(qrInterval);
+            qrInterval = setInterval(() => {
+                qrExpireTime--;
+                updateQRExpireTime();
+                
+                if (qrExpireTime <= 0) {
+                    clearInterval(qrInterval);
+                    qrInterval = null;
+                    activeQRCode = null;
+                    document.getElementById('qrExpireTime').textContent = 'หมดอายุแล้ว';
+                }
+            }, 1000);
+        }
+
+        // Update QR expire time display
+        function updateQRExpireTime() {
+            const minutes = Math.floor(qrExpireTime / 60);
+            const seconds = qrExpireTime % 60;
+            document.getElementById('qrExpireTime').textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        // Handle avatar upload
+        function handleAvatarUpload(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            if (!file.type.match('image.*')) {
+                showNotification('error', 'กรุณาเลือกไฟล์รูปภาพเท่านั้น');
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                // In a real app, you would upload this to a server
+                // For demo, we'll just store it as a data URL
+                const avatarUrl = event.target.result;
+                
+                // Update avatar preview
+                const modalAvatar = document.getElementById('modalAvatar');
+                modalAvatar.innerHTML = `<img src="${avatarUrl}" alt="${currentUser.fullName}">`;
+                
+                // Update current user's avatar
+                currentUser.avatar = avatarUrl;
+                updateUserAvatar();
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // Update user avatar in UI
+        function updateUserAvatar() {
+            const avatar = document.getElementById('userAvatar');
+            if (currentUser.avatar) {
+                avatar.innerHTML = `<img src="${currentUser.avatar}" alt="${currentUser.fullName}">`;
+            } else {
+                const initials = currentUser.fullName.split(' ').map(name => name[0]).join('');
+                avatar.innerHTML = `<span>${initials}</span>`;
+            }
+            
+            // Update database
+            const db = getDatabase();
+            const userIndex = db.users.findIndex(u => u.id === currentUser.id);
+            if (userIndex >= 0) {
+                db.users[userIndex].avatar = currentUser.avatar;
+                saveDatabase(db);
+            }
+        }
+
+        // Save profile changes
+        function saveProfile() {
+            const fullName = document.getElementById('modalFullName').value.trim();
+            const email = document.getElementById('modalEmail').value.trim();
+            const phone = document.getElementById('modalPhone').value.trim();
+            
+            if (!fullName) {
+                showNotification('error', 'กรุณากรอกชื่อ-สกุล');
+                return;
+            }
+            
+            // Update current user
+            currentUser.fullName = fullName;
+            currentUser.email = email;
+            currentUser.phone = phone;
+            
+            // Update database
+            const db = getDatabase();
+            const userIndex = db.users.findIndex(u => u.id === currentUser.id);
+            if (userIndex >= 0) {
+                db.users[userIndex] = currentUser;
+                saveDatabase(db);
+            }
+            
+            // Update UI
+            updateUserUI();
+            closeModal(profileModal);
+            showNotification('success', 'บันทึกการเปลี่ยนแปลงโปรไฟล์เรียบร้อย');
+        }
+
+        // Change password
+        async function changePassword() {
+            const currentPass = document.getElementById('currentPassword').value;
+            const newPass = document.getElementById('newPassword').value;
+            const confirmPass = document.getElementById('confirmPassword').value;
+            
+            const alertElement = document.getElementById('passwordAlert');
+            alertElement.style.display = 'none';
+            
+            if (!currentPass || !newPass || !confirmPass) {
+                alertElement.textContent = 'กรุณากรอกข้อมูลให้ครบทุกช่อง';
+                alertElement.style.display = 'block';
+                return;
+            }
+            
+            if (newPass !== confirmPass) {
+                alertElement.textContent = 'รหัสผ่านใหม่ไม่ตรงกัน';
+                alertElement.style.display = 'block';
+                return;
+            }
+            
+            if (newPass.length < 6) {
+                alertElement.textContent = 'รหัสผ่านใหม่ต้องมีความยาวอย่างน้อย 6 ตัวอักษร';
+                alertElement.style.display = 'block';
+                return;
+            }
+            
+            // Verify current password
+            const hashedCurrentPass = await sha256(currentPass);
+            if (hashedCurrentPass !== currentUser.password) {
+                alertElement.textContent = 'รหัสผ่านปัจจุบันไม่ถูกต้อง';
+                alertElement.style.display = 'block';
+                return;
+            }
+            
+            // Hash new password
+            const hashedNewPass = await sha256(newPass);
+            
+            // Update password
+            currentUser.password = hashedNewPass;
+            
+            // Update database
+            const db = getDatabase();
+            const userIndex = db.users.findIndex(u => u.id === currentUser.id);
+            if (userIndex >= 0) {
+                db.users[userIndex].password = hashedNewPass;
+                saveDatabase(db);
+            }
+            
+            // Update localStorage
+            localStorage.setItem('attendanceSystemUser', JSON.stringify(currentUser));
+            
+            closeModal(changePasswordModal);
+            showNotification('success', 'เปลี่ยนรหัสผ่านเรียบร้อย');
+        }
+
+        // Toggle user role fields
+        function toggleUserRoleFields() {
+            const role = document.getElementById('userRole').value;
+            
+            if (role === 'student') {
+                document.getElementById('studentIdGroup').style.display = 'block';
+                document.getElementById('teacherSubjectGroup').style.display = 'none';
+            } else if (role === 'teacher') {
+                document.getElementById('studentIdGroup').style.display = 'none';
+                document.getElementById('teacherSubjectGroup').style.display = 'block';
+            } else {
+                document.getElementById('studentIdGroup').style.display = 'none';
+                document.getElementById('teacherSubjectGroup').style.display = 'none';
+            }
+        }
+
+        // Save new user
+        async function saveUser() {
+            const role = document.getElementById('userRole').value;
+            const username = document.getElementById('newUsername').value.trim();
+            const password = document.getElementById('newPassword').value.trim();
+            const fullName = document.getElementById('newFullName').value.trim();
+            const studentId = document.getElementById('studentId').value.trim();
+            const teacherSubject = document.getElementById('teacherSubject').value.trim();
+            const email = document.getElementById('userEmail').value.trim();
+            
+            const alertElement = document.getElementById('addUserAlert');
+            alertElement.style.display = 'none';
+            
+            if (!username || !fullName) {
+                alertElement.textContent = 'กรุณากรอกชื่อผู้ใช้และชื่อ-สกุล';
+                alertElement.style.display = 'block';
+                return;
+            }
+            
+            if (role === 'student' && !studentId) {
+                alertElement.textContent = 'กรุณากรอกรหัสนักเรียน';
+                alertElement.style.display = 'block';
+                return;
+            }
+            
+            if (role === 'teacher' && !teacherSubject) {
+                alertElement.textContent = 'กรุณากรอกวิชาที่สอน';
+                alertElement.style.display = 'block';
+                return;
+            }
+            
+            // Check if username already exists
+            const db = getDatabase();
+            if (db.users.some(u => u.username === username)) {
+                alertElement.textContent = 'ชื่อผู้ใช้นี้มีอยู่แล้ว';
+                alertElement.style.display = 'block';
+                return;
+            }
+            
+            // Hash password
+            const hashedPassword = await sha256(password);
+            
+            // Create new user
+            const newUser = {
+                id: db.users.length + 1,
+                username,
+                password: hashedPassword,
+                role,
+                fullName,
+                email
+            };
+            
+            if (role === 'student') {
+                newUser.studentId = studentId;
+                newUser.class = 'ม.1/1'; // Default class for demo
+            } else if (role === 'teacher') {
+                newUser.subject = teacherSubject;
+            }
+            
+            // Add to database
+            db.users.push(newUser);
+            saveDatabase(db);
+            
+            closeModal(addUserModal);
+            showNotification('success', 'เพิ่มผู้ใช้ใหม่เรียบร้อย');
+            
+            // Reload users page if currently viewing it
+            if (document.getElementById('pageTitle').textContent === 'จัดการผู้ใช้') {
+                loadPage('users');
+            }
+        }
+
+        // Handle Excel import
+        function handleExcelImport(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                try {
+                    const data = new Uint8Array(event.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    
+                    // Get first sheet
+                    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                    
+                    // Convert to JSON
+                    const jsonData = XLSX.utils.sheet_to_json(firstSheet);
+                    
+                    // Display preview
+                    displayImportPreview(jsonData);
+                } catch (error) {
+                    console.error('Error reading Excel file:', error);
+                    showNotification('error', 'เกิดข้อผิดพลาดในการอ่านไฟล์ Excel');
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        // Display import preview
+        function displayImportPreview(data) {
+            if (!data || data.length === 0) {
+                document.getElementById('importPreview').style.display = 'none';
+                document.getElementById('importBtn').disabled = true;
+                return;
+            }
+            
+            // Validate data structure
+            const firstRow = data[0];
+            if (!firstRow.hasOwnProperty('รหัสนักเรียน') || 
+                !firstRow.hasOwnProperty('ชื่อ') || 
+                !firstRow.hasOwnProperty('นามสกุล') || 
+                !firstRow.hasOwnProperty('วันเกิด') || 
+                !firstRow.hasOwnProperty('ห้องเรียน')) {
+                
+                document.getElementById('importAlert').textContent = 'รูปแบบไฟล์ไม่ถูกต้อง กรุณาตรวจสอบโครงสร้างไฟล์อีกครั้ง';
+                document.getElementById('importAlert').style.display = 'block';
+                document.getElementById('importPreview').style.display = 'none';
+                document.getElementById('importBtn').disabled = true;
+                return;
+            }
+            
+            // Display preview
+            const previewTable = document.querySelector('#previewTable tbody');
+            previewTable.innerHTML = '';
+            
+            data.slice(0, 5).forEach(row => {
+                previewTable.innerHTML += `
+                    <tr>
+                        <td>${row['รหัสนักเรียน'] || '-'}</td>
+                        <td>${row['ชื่อ'] || '-'}</td>
+                        <td>${row['นามสกุล'] || '-'}</td>
+                        <td>${row['วันเกิด'] || '-'}</td>
+                        <td>${row['ห้องเรียน'] || '-'}</td>
+                    </tr>
+                `;
+            });
+            
+            if (data.length > 5) {
+                previewTable.innerHTML += `
+                    <tr>
+                        <td colspan="5" class="text-center">และอีก ${data.length - 5} แถว...</td>
+                    </tr>
+                `;
+            }
+            
+            document.getElementById('importPreview').style.display = 'block';
+            document.getElementById('importBtn').disabled = false;
+            document.getElementById('importAlert').style.display = 'none';
+        }
+
+        // Import students from Excel
+        async function importStudents() {
+            const fileInput = document.getElementById('excelFile');
+            const file = fileInput.files[0];
+            if (!file) return;
+            
+            try {
+                const reader = new FileReader();
+                reader.onload = async (event) => {
+                    const data = new Uint8Array(event.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    
+                    // Get first sheet
+                    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                    
+                    // Convert to JSON
+                    const jsonData = XLSX.utils.sheet_to_json(firstSheet);
+                    
+                    // Process data
+                    const db = getDatabase();
+                    let count = 0;
+                    
+                    for (const row of jsonData) {
+                        const studentId = row['รหัสนักเรียน'];
+                        const firstName = row['ชื่อ'];
+                        const lastName = row['นามสกุล'];
+                        const birthDate = row['วันเกิด'];
+                        const classroom = row['ห้องเรียน'];
+                        
+                        if (!studentId || !firstName || !lastName || !birthDate || !classroom) {
+                            continue;
+                        }
+                        
+                        // Convert birth date to password (DDMMYYYY)
+                        const dateParts = birthDate.split('/');
+                        let day, month, year;
+                        
+                        if (dateParts.length === 3) {
+                            day = dateParts[0].padStart(2, '0');
+                            month = dateParts[1].padStart(2, '0');
+                            year = dateParts[2];
+                        } else {
+                            // Try other date formats if needed
+                            continue;
+                        }
+                        
+                        const password = `${day}${month}${year}`;
+                        const hashedPassword = await sha256(password);
+                        
+                        // Check if student already exists
+                        const existingStudent = db.users.find(u => 
+                            u.role === 'student' && 
+                            u.studentId === studentId
+                        );
+                        
+                        if (existingStudent) {
+                            // Update existing student
+                            existingStudent.fullName = `${firstName} ${lastName}`;
+                            existingStudent.class = classroom;
+                        } else {
+                            // Add new student
+                            db.users.push({
+                                id: db.users.length + 1,
+                                username: `student${studentId}`,
+                                password: hashedPassword,
+                                role: 'student',
+                                fullName: `${firstName} ${lastName}`,
+                                studentId,
+                                class: classroom
+                            });
+                        }
+                        
+                        count++;
+                    }
+                    
+                    // Save database
+                    saveDatabase(db);
+                    
+                    closeModal(importModal);
+                    showNotification('success', `นำเข้าข้อมูลนักเรียนเรียบร้อย ${count} รายการ`);
+                    
+                    // Reload users page if currently viewing it
+                    if (document.getElementById('pageTitle').textContent === 'จัดการผู้ใช้') {
+                        loadPage('users');
+                    }
+                };
+                reader.readAsArrayBuffer(file);
+            } catch (error) {
+                console.error('Error importing students:', error);
+                showNotification('error', 'เกิดข้อผิดพลาดในการนำเข้าข้อมูล');
+            }
+        }
+
+        // Show notification
+        function showNotification(type, message, duration = 5000) {
+            const notification = document.createElement('div');
+            notification.className = `notification fade-in ${type}`;
+            
+            let icon = '';
+            switch (type) {
+                case 'success': icon = 'fas fa-check-circle'; break;
+                case 'error': icon = 'fas fa-exclamation-circle'; break;
+                case 'info': icon = 'fas fa-info-circle'; break;
+                case 'warning': icon = 'fas fa-exclamation-triangle'; break;
+                default: icon = 'fas fa-bell'; break;
+            }
+            
+            notification.innerHTML = `
+                <div class="notification-icon">
+                    <i class="${icon}"></i>
+                </div>
+                <div class="notification-info">
+                    <div class="notification-title">${type === 'success' ? 'สำเร็จ' : 
+                                              type === 'error' ? 'ข้อผิดพลาด' : 
+                                              type === 'info' ? 'ข้อมูล' : 'คำเตือน'}</div>
+                    <div class="notification-message">${message}</div>
+                </div>
+                <button class="notification-close">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+            
+            notificationContainer.appendChild(notification);
+            
+            // Auto-remove after duration
+            setTimeout(() => {
+                notification.classList.add('hide');
+                setTimeout(() => {
+                    notification.remove();
+                }, 300);
+            }, duration);
+            
+            // Close button
+            notification.querySelector('.notification-close').addEventListener('click', () => {
+                notification.classList.add('hide');
+                setTimeout(() => {
+                    notification.remove();
+                }, 300);
+            });
+        }
+
+        // Update notification badge
+        function updateNotificationBadge() {
+            if (!currentUser) return;
+            
+            const db = getDatabase();
+            let unreadCount = 0;
+            
+            if (currentUser.role === 'admin') {
+                unreadCount = db.notifications.filter(n => !n.read).length;
+            } else if (currentUser.role === 'teacher') {
+                unreadCount = db.notifications.filter(n => 
+                    !n.read && 
+                    (n.type === 'school' || 
+                     (n.type === 'subject' && ['math', 'sci'].includes(n.subject))) // Simplified for demo
+                ).length;
+            } else if (currentUser.role === 'student') {
+                unreadCount = db.notifications.filter(n => 
+                    !n.read && 
+                    (n.type === 'school' || 
+                     n.type === 'subject' || 
+                     (n.type === 'personal' && n.userId === currentUser.id))
+                ).length;
+            }
+            
+            if (unreadCount > 0) {
+                notificationBadge.textContent = unreadCount;
+                notificationBadge.style.display = 'flex';
+            } else {
+                notificationBadge.style.display = 'none';
+            }
+        }
+
+        // Format date
+        function formatDate(dateString, format = 'long') {
+            if (!dateString) return '';
+            
+            const date = new Date(dateString);
+            if (isNaN(date.getTime())) return dateString;
+            
+            if (format === 'short') {
+                return `${date.getDate()}/${date.getMonth() + 1}`;
+            } else {
+                const options = { day: '2-digit', month: '2-digit', year: 'numeric' };
+                return date.toLocaleDateString('th-TH', options);
+            }
+        }
+
+        // Get database from localStorage
+        function getDatabase() {
+            const db = localStorage.getItem('attendanceSystemDB');
+            return db ? JSON.parse(db) : JSON.parse(JSON.stringify(database));
+        }
+
+        // Save database to localStorage
+        function saveDatabase(db) {
+            localStorage.setItem('attendanceSystemDB', JSON.stringify(db));
+        }
+
+        // Initialize the app when DOM is loaded
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
 </body>
 </html>
