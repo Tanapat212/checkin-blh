@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ระบบจัดการการเข้าเรียน - โรงเรียนตัวอย่าง (Firebase)</title>
+    <title>ระบบจัดการการเข้าเรียน - โรงเรียนตัวอย่าง</title>
     
-    <!-- Firebase SDK (compat) -->
+    <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -14,57 +14,836 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
-
+    
     <style>
-        /* --- (same styling as the original file) --- */
-        * { margin:0; padding:0; box-sizing:border-box; }
-        :root{ --primary-green:#2E7D32; --secondary-green:#4CAF50; --accent-yellow:#FFD700; --light-green:#E8F5E8; --dark-green:#1B5E20; --text-dark:#2C3E50; --text-light:#7F8C8D; --white:#FFFFFF; --shadow:0 4px 20px rgba(0,0,0,0.1); --border-radius:15px; }
-        body{ font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background:linear-gradient(135deg,var(--primary-green),var(--secondary-green)); min-height:100vh; overflow-x:hidden; }
-        .animated-bg{ position:fixed; top:0; left:0; width:100%; height:100%; z-index:-1; overflow:hidden; }
-        .floating-shape{ position:absolute; background:rgba(255,255,255,0.08); border-radius:50%; animation:float 20s infinite linear; }
-        .floating-shape:nth-child(1){ width:80px; height:80px; top:10%; left:10%; }
-        .floating-shape:nth-child(2){ width:120px; height:120px; top:70%; left:80%; }
-        .floating-shape:nth-child(3){ width:60px; height:60px; top:40%; left:70%; }
-        .floating-shape:nth-child(4){ width:100px; height:100px; top:80%; left:20%; }
-        @keyframes float{ 0%{ transform:translateY(0px) rotate(0deg); opacity:0.7; } 50%{ transform:translateY(-20px) rotate(180deg); opacity:0.3; } 100%{ transform:translateY(0px) rotate(360deg); opacity:0.7; } }
-        .login-container{ display:flex; align-items:center; justify-content:center; min-height:100vh; padding:20px; }
-        .login-box{ background:var(--white); border-radius:var(--border-radius); box-shadow:var(--shadow); padding:40px; width:100%; max-width:450px; text-align:center; }
-        .school-logo{ width:80px; height:80px; margin:0 auto 20px; background:linear-gradient(135deg,var(--primary-green),var(--secondary-green)); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:2.5rem; }
-        .login-title{ font-size:2rem; color:var(--text-dark); margin-bottom:10px; background:linear-gradient(135deg,var(--primary-green),var(--secondary-green)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
-        .login-subtitle{ color:var(--text-light); margin-bottom:30px; font-size:1.1rem; }
-        .form-group{ margin-bottom:20px; text-align:left; }
-        .form-group label{ display:block; margin-bottom:8px; color:var(--text-dark); font-weight:600; }
-        .form-control{ width:100%; padding:15px; border:2px solid #E0E0E0; border-radius:10px; font-size:16px; background:var(--white); }
-        .form-control:focus{ outline:none; border-color:var(--secondary-green); box-shadow:0 0 0 3px rgba(76,175,80,0.1); }
-        .btn-primary{ width:100%; padding:15px; background:linear-gradient(135deg,var(--primary-green),var(--secondary-green)); color:var(--white); border:none; border-radius:10px; font-size:16px; font-weight:600; cursor:pointer; }
-        .hidden{ display:none !important; }
-        .dashboard{ display:none; min-height:100vh; background:#F8F9FA; }
-        .dashboard.active{ display:block; }
-        .navbar{ background:var(--white); box-shadow:var(--shadow); padding:15px 0; position:sticky; top:0; z-index:100; }
-        .navbar-content{ max-width:1200px; margin:0 auto; padding:0 20px; display:flex; justify-content:space-between; align-items:center; }
-        .navbar-title{ font-size:1.5rem; font-weight:bold; color:var(--text-dark); }
-        .btn-logout{ background:linear-gradient(135deg,#E74C3C,#C0392B); color:var(--white); border:none; padding:8px 16px; border-radius:20px; cursor:pointer; }
-        .main-content{ max-width:1200px; margin:0 auto; padding:30px 20px; }
-        .page-title{ font-size:2rem; color:var(--text-dark); margin-bottom:10px; }
-        .nav-tabs{ display:flex; gap:10px; margin-bottom:30px; flex-wrap:wrap; }
-        .nav-tab{ padding:12px 24px; background:var(--white); border-radius:25px; cursor:pointer; color:var(--text-dark); font-weight:500; }
-        .nav-tab.active{ background:linear-gradient(135deg,var(--primary-green),var(--secondary-green)); color:var(--white); }
-        .card{ background:var(--white); border-radius:var(--border-radius); box-shadow:var(--shadow); padding:25px; margin-bottom:20px; }
-        .stats-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(250px,1fr)); gap:20px; margin-bottom:30px; }
-        .stat-card{ background:linear-gradient(135deg,var(--primary-green),var(--secondary-green)); color:var(--white); padding:25px; border-radius:var(--border-radius); text-align:center; }
-        .stat-value{ font-size:3rem; font-weight:bold; }
-        .chart-container{ position:relative; height:400px; margin:20px 0; }
-        .table-responsive{ overflow-x:auto; border-radius:var(--border-radius); box-shadow:var(--shadow); }
-        .table{ width:100%; background:var(--white); border-collapse:collapse; }
-        .table th, .table td{ padding:15px; text-align:left; border-bottom:1px solid #E0E0E0; }
-        .status-badge{ padding:4px 12px; border-radius:20px; font-size:0.85rem; font-weight:600; }
-        .status-present{ background:#D4EDDA; color:#155724; }
-        .status-absent{ background:#F8D7DA; color:#721C24; }
-        .status-late{ background:#FFF3CD; color:#856404; }
-        .notification{ position:fixed; top:20px; right:20px; background:var(--white); border-left:4px solid var(--secondary-green); border-radius:8px; padding:15px 20px; box-shadow:var(--shadow); z-index:1000; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-green: #2E7D32;
+            --secondary-green: #4CAF50;
+            --accent-yellow: #FFD700;
+            --light-green: #E8F5E8;
+            --dark-green: #1B5E20;
+            --text-dark: #2C3E50;
+            --text-light: #7F8C8D;
+            --white: #FFFFFF;
+            --shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            --border-radius: 15px;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--primary-green), var(--secondary-green));
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Animated Background */
+        .animated-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            overflow: hidden;
+        }
+
+        .floating-shape {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            animation: float 20s infinite linear;
+        }
+
+        .floating-shape:nth-child(1) {
+            width: 80px;
+            height: 80px;
+            top: 10%;
+            left: 10%;
+            animation-delay: 0s;
+        }
+
+        .floating-shape:nth-child(2) {
+            width: 120px;
+            height: 120px;
+            top: 70%;
+            left: 80%;
+            animation-delay: -5s;
+        }
+
+        .floating-shape:nth-child(3) {
+            width: 60px;
+            height: 60px;
+            top: 40%;
+            left: 70%;
+            animation-delay: -10s;
+        }
+
+        .floating-shape:nth-child(4) {
+            width: 100px;
+            height: 100px;
+            top: 80%;
+            left: 20%;
+            animation-delay: -15s;
+        }
+
+        @keyframes float {
+            0% {
+                transform: translateY(0px) rotate(0deg);
+                opacity: 0.7;
+            }
+            50% {
+                transform: translateY(-20px) rotate(180deg);
+                opacity: 0.3;
+            }
+            100% {
+                transform: translateY(0px) rotate(360deg);
+                opacity: 0.7;
+            }
+        }
+
+        /* Login Section */
+        .login-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .login-box {
+            background: var(--white);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            padding: 40px;
+            width: 100%;
+            max-width: 450px;
+            text-align: center;
+            transform: translateY(0);
+            animation: slideUp 0.8s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .school-logo {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 20px;
+            background: linear-gradient(135deg, var(--primary-green), var(--secondary-green));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.05);
+            }
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        .login-title {
+            font-size: 2rem;
+            color: var(--text-dark);
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, var(--primary-green), var(--secondary-green));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .login-subtitle {
+            color: var(--text-light);
+            margin-bottom: 30px;
+            font-size: 1.1rem;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--text-dark);
+            font-weight: 600;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #E0E0E0;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            background: var(--white);
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--secondary-green);
+            box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+        }
+
+        .btn-primary {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, var(--primary-green), var(--secondary-green));
+            color: var(--white);
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(46, 125, 50, 0.3);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+
+        /* Main Dashboard */
+        .dashboard {
+            display: none;
+            min-height: 100vh;
+            background: #F8F9FA;
+        }
+
+        .dashboard.active {
+            display: block;
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .navbar {
+            background: var(--white);
+            box-shadow: var(--shadow);
+            padding: 15px 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .navbar-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .navbar-brand {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .navbar-logo {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--primary-green), var(--secondary-green));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        .navbar-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--text-dark);
+        }
+
+        .navbar-user {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .user-info {
+            text-align: right;
+        }
+
+        .user-name {
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+
+        .user-role {
+            font-size: 0.9rem;
+            color: var(--text-light);
+        }
+
+        .btn-logout {
+            background: linear-gradient(135deg, #E74C3C, #C0392B);
+            color: var(--white);
+            border: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-logout:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(231, 76, 60, 0.3);
+        }
+
+        /* Main Content */
+        .main-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 30px 20px;
+        }
+
+        .page-header {
+            margin-bottom: 30px;
+        }
+
+        .page-title {
+            font-size: 2rem;
+            color: var(--text-dark);
+            margin-bottom: 10px;
+        }
+
+        .page-subtitle {
+            color: var(--text-light);
+            font-size: 1.1rem;
+        }
+
+        /* Navigation Tabs */
+        .nav-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .nav-tab {
+            padding: 12px 24px;
+            background: var(--white);
+            border: 2px solid transparent;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: var(--text-dark);
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .nav-tab:hover {
+            background: var(--light-green);
+            transform: translateY(-2px);
+        }
+
+        .nav-tab.active {
+            background: linear-gradient(135deg, var(--primary-green), var(--secondary-green));
+            color: var(--white);
+            border-color: var(--primary-green);
+        }
+
+        /* Cards */
+        .card {
+            background: var(--white);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            padding: 25px;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #F0F0F0;
+        }
+
+        .card-title {
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, var(--primary-green), var(--secondary-green));
+            color: var(--white);
+            padding: 25px;
+            border-radius: var(--border-radius);
+            text-align: center;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transform: translateX(-100%);
+            transition: transform 0.8s ease;
+        }
+
+        .stat-card:hover::before {
+            transform: translateX(100%);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(46, 125, 50, 0.3);
+        }
+
+        .stat-value {
+            font-size: 3rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .stat-label {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        /* Form Styles */
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, var(--secondary-green), var(--primary-green));
+            color: var(--white);
+        }
+
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(76, 175, 80, 0.3);
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, var(--accent-yellow), #F39C12);
+            color: var(--text-dark);
+        }
+
+        .btn-warning:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 215, 0, 0.3);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #E74C3C, #C0392B);
+            color: var(--white);
+        }
+
+        .btn-danger:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(231, 76, 60, 0.3);
+        }
+
+        /* Table Styles */
+        .table-responsive {
+            overflow-x: auto;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+        }
+
+        .table {
+            width: 100%;
+            background: var(--white);
+            border-collapse: collapse;
+        }
+
+        .table th, .table td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #E0E0E0;
+        }
+
+        .table th {
+            background: var(--light-green);
+            color: var(--text-dark);
+            font-weight: 600;
+        }
+
+        .table tbody tr:hover {
+            background: #F8F9FA;
+        }
+
+        /* Status Badges */
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .status-present {
+            background: #D4EDDA;
+            color: #155724;
+        }
+
+        .status-absent {
+            background: #F8D7DA;
+            color: #721C24;
+        }
+
+        .status-late {
+            background: #FFF3CD;
+            color: #856404;
+        }
+
+        /* Notification */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--white);
+            border-left: 4px solid var(--secondary-green);
+            border-radius: 8px;
+            padding: 15px 20px;
+            box-shadow: var(--shadow);
+            z-index: 1000;
+            animation: slideInRight 0.5s ease-out;
+            max-width: 350px;
+        }
+
+        .notification.error {
+            border-left-color: #E74C3C;
+        }
+
+        .notification.warning {
+            border-left-color: var(--accent-yellow);
+        }
+
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(100px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        /* Loading Spinner */
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: var(--white);
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .navbar-content {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .navbar-user {
+                order: -1;
+            }
+
+            .main-content {
+                padding: 20px 15px;
+            }
+
+            .nav-tabs {
+                justify-content: center;
+            }
+
+            .nav-tab {
+                flex: 1;
+                justify-content: center;
+                min-width: 120px;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .login-box {
+                padding: 30px 20px;
+            }
+
+            .page-title {
+                font-size: 1.5rem;
+            }
+        }
+
+        /* Chart Container */
+        .chart-container {
+            position: relative;
+            height: 400px;
+            margin: 20px 0;
+        }
+
+        /* Search Box */
+        .search-box {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 12px 45px 12px 15px;
+            border: 2px solid #E0E0E0;
+            border-radius: 25px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--secondary-green);
+            box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+        }
+
+        .search-icon {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-light);
+        }
+
+        /* Hidden class */
+        .hidden {
+            display: none !important;
+        }
+
+        /* User Management */
+        .user-card {
+            background: var(--white);
+            border-radius: var(--border-radius);
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: var(--shadow);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
+
+        .user-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .user-info-card {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .user-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary-green), var(--secondary-green));
+            color: var(--white);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+
+        .user-details h4 {
+            margin: 0;
+            color: var(--text-dark);
+        }
+
+        .user-details p {
+            margin: 0;
+            color: var(--text-light);
+            font-size: 0.9rem;
+        }
+
+        .user-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 0.85rem;
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+        }
+
+        .modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .modal-content {
+            background: var(--white);
+            border-radius: var(--border-radius);
+            padding: 30px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: var(--shadow);
+            animation: slideUp 0.3s ease-out;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #F0F0F0;
+        }
+
+        .modal-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--text-light);
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .close-btn:hover {
+            color: var(--text-dark);
+        }
+
+        /* Settings Page */
+        .settings-section {
+            margin-bottom: 30px;
+        }
+
+        .settings-section h3 {
+            color: var(--text-dark);
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+        }
+
+        .time-input {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .time-input input {
+            width: 120px;
+        }
+
+        .time-input span {
+            color: var(--text-light);
+        }
     </style>
 </head>
 <body>
+    <!-- Animated Background -->
     <div class="animated-bg">
         <div class="floating-shape"></div>
         <div class="floating-shape"></div>
@@ -72,125 +851,135 @@
         <div class="floating-shape"></div>
     </div>
 
-    <!-- Login -->
+    <!-- Login Section -->
     <div id="loginSection" class="login-container">
         <div class="login-box">
             <div class="school-logo">🎓</div>
             <h1 class="login-title">โรงเรียนตัวอย่าง</h1>
             <p class="login-subtitle">ระบบจัดการการเข้าเรียน</p>
+            
             <form id="loginForm">
                 <div class="form-group">
-                    <label for="username">ชื่อผู้ใช้ (ใส่อีเมลเมื่อใช้ Firebase):</label>
-                    <input type="text" id="username" class="form-control" placeholder="กรอกอีเมลหรือชื่อผู้ใช้" required>
+                    <label for="username">ชื่อผู้ใช้:</label>
+                    <input type="text" id="username" class="form-control" placeholder="กรอกชื่อผู้ใช้" required>
                 </div>
+                
                 <div class="form-group">
                     <label for="password">รหัสผ่าน:</label>
-                    <input type="password" id="password" class="form-control" placeholder="รหัสผ่าน" required>
+                    <input type="password" id="password" class="form-control" placeholder="กรอกรหัสผ่าน" required>
                 </div>
+                
                 <div class="form-group">
-                    <label for="role">บทบาท (เลือกหรือปล่อยว่าง):</label>
-                    <select id="role" class="form-control">
-                        <option value="">(ไม่ระบุ)</option>
-                        <option value="admin">ผู้ดูแลระบบ</option>
-                        <option value="teacher">ครู</option>
-                        <option value="student">นักเรียน</option>
+                    <label for="role">บทบาท:</label>
+                    <select id="role" class="form-control" required>
+                        <option value="">เลือกบทบาท</option>
+                        <option value="admin">👑 ผู้ดูแลระบบ</option>
+                        <option value="teacher">👨‍🏫 ครู</option>
+                        <option value="student">🎓 นักเรียน</option>
                     </select>
                 </div>
+                
                 <button type="submit" class="btn-primary">
                     <span id="loginText">เข้าสู่ระบบ</span>
                     <span id="loginSpinner" class="loading-spinner hidden"></span>
                 </button>
             </form>
-
-            <p style="margin-top:12px; color:var(--text-light); font-size:0.9rem;">ยังไม่มีบัญชี? กดปุ่ม "เพิ่มผู้ใช้ใหม่" ในหน้าแดชบอร์ด (หรือสร้างใน Firebase Console)</p>
         </div>
     </div>
 
-    <!-- Dashboard -->
+    <!-- Dashboard Section -->
     <div id="dashboardSection" class="dashboard">
+        <!-- Navigation Bar -->
         <nav class="navbar">
             <div class="navbar-content">
-                <div style="display:flex; gap:12px; align-items:center;">
+                <div class="navbar-brand">
                     <div class="navbar-logo">🎓</div>
                     <div class="navbar-title">โรงเรียนตัวอย่าง</div>
                 </div>
-                <div style="display:flex; align-items:center; gap:12px;">
-                    <div style="text-align:right;">
-                        <div id="userName" style="font-weight:600; color:var(--text-dark);">ผู้ใช้</div>
-                        <div id="userRole" style="font-size:0.9rem; color:var(--text-light);">บทบาท</div>
+                <div class="navbar-user">
+                    <div class="user-info">
+                        <div class="user-name" id="userName">ผู้ใช้</div>
+                        <div class="user-role" id="userRole">บทบาท</div>
                     </div>
                     <button class="btn-logout" onclick="logout()">🚪 ออกจากระบบ</button>
                 </div>
             </div>
         </nav>
 
+        <!-- Main Content -->
         <div class="main-content">
             <div class="page-header">
                 <h1 class="page-title" id="pageTitle">แดชบอร์ด</h1>
                 <p class="page-subtitle" id="pageSubtitle">ภาพรวมระบบจัดการการเข้าเรียน</p>
             </div>
 
-            <div class="nav-tabs" id="navTabs"></div>
-            <div id="tabContent"></div>
+            <!-- Navigation Tabs -->
+            <div class="nav-tabs" id="navTabs">
+                <!-- Tabs will be dynamically generated based on user role -->
+            </div>
+
+            <!-- Tab Content -->
+            <div id="tabContent">
+                <!-- Content will be dynamically loaded -->
+            </div>
         </div>
     </div>
 
-    <!-- User Modal (add user) -->
-    <div id="userModal" class="modal" style="display:none;">
+    <!-- Modals -->
+    <div id="userModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2 class="modal-title">เพิ่มผู้ใช้ใหม่</h2>
+                <h2 class="modal-title" id="userModalTitle">เพิ่มผู้ใช้ใหม่</h2>
                 <button class="close-btn" onclick="closeModal('userModal')">&times;</button>
             </div>
             <form id="userForm">
                 <div class="form-group">
-                    <label for="newUsername">ชื่อผู้ใช้ (ไม่จำเป็นถ้าใช้ e-mail):</label>
-                    <input type="text" id="newUsername" class="form-control">
+                    <label for="newUsername">ชื่อผู้ใช้:</label>
+                    <input type="text" id="newUsername" class="form-control" required>
                 </div>
                 <div class="form-group">
                     <label for="newName">ชื่อ-นามสกุล:</label>
                     <input type="text" id="newName" class="form-control" required>
                 </div>
                 <div class="form-group">
-                    <label for="newEmail">อีเมล (ใช้เข้าสู่ระบบ):</label>
+                    <label for="newEmail">อีเมล:</label>
                     <input type="email" id="newEmail" class="form-control" required>
                 </div>
                 <div class="form-group">
                     <label for="newRole">บทบาท:</label>
                     <select id="newRole" class="form-control" required>
+                        <option value="">เลือกบทบาท</option>
                         <option value="admin">ผู้ดูแลระบบ</option>
                         <option value="teacher">ครู</option>
-                        <option value="student" selected>นักเรียน</option>
+                        <option value="student">นักเรียน</option>
                     </select>
                 </div>
                 <div class="form-group">
                     <label for="newPassword">รหัสผ่าน:</label>
                     <input type="password" id="newPassword" class="form-control" required>
                 </div>
-                <div style="display:flex; gap:10px; margin-top:10px;">
+                <div class="form-row">
                     <button type="submit" class="btn btn-success">💾 บันทึก</button>
-                    <button type="button" class="btn" onclick="closeModal('userModal')">❌ ยกเลิก</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('userModal')">❌ ยกเลิก</button>
                 </div>
             </form>
         </div>
     </div>
 
     <script>
-        /* ---------- Firebase config (REPLACE with the config you gave) ---------- */
+        // Firebase Configuration (Replace with your actual config)
         const firebaseConfig = {
-          apiKey: "AIzaSyD80WK9Mx-QjXp3lOwIDCIrfLoXoODlzlg",
-          authDomain: "check-name-blh.firebaseapp.com",
-          databaseURL: "https://check-name-blh-default-rtdb.asia-southeast1.firebasedatabase.app",
-          projectId: "check-name-blh",
-          storageBucket: "check-name-blh.firebasestorage.app",
-          messagingSenderId: "420973526100",
-          appId: "1:420973526100:web:b7a382f4784382e51281c1",
-          measurementId: "G-86R88K64SC"
+            // Note: This is a demo configuration. In production, use your actual Firebase config
+            apiKey: "demo-key",
+            authDomain: "demo-project.firebaseapp.com",
+            projectId: "demo-project",
+            storageBucket: "demo-project.appspot.com",
+            messagingSenderId: "123456789",
+            appId: "1:123456789:web:abcdef123456"
         };
 
-        // Initialize Firebase
-        let db = null;
-        let auth = null;
+        // Initialize Firebase (Demo mode - using local data)
+        let db, auth;
         let isFirebaseEnabled = false;
 
         try {
@@ -198,279 +987,1246 @@
             db = firebase.firestore();
             auth = firebase.auth();
             isFirebaseEnabled = true;
-            console.log('Firebase initialized');
-        } catch (err) {
-            console.warn('Firebase init failed, switching to demo mode', err);
+            console.log('Firebase initialized successfully');
+        } catch (error) {
+            console.log('Firebase not available, using demo mode');
             isFirebaseEnabled = false;
         }
 
-        // Global state
-        let currentUser = null; // uid when firebase enabled, else username
+        // Global Variables
+        let currentUser = null;
         let currentUserData = null;
+        let activeTab = 'dashboard';
 
-        // Demo fallback data (kept for offline/testing)
+        // Demo Data (when Firebase is not available)
         let demoUsers = {
-            'admin': { username: 'admin', password: CryptoJS.SHA256('admin123').toString(), name: 'ผู้ดูแลระบบ สมชาย', email: 'admin@school.com', role: 'admin' }
+            'admin': {
+                username: 'admin',
+                password: hashPassword('admin123'),
+                name: 'ผู้ดูแลระบบ สมชาย',
+                email: 'admin@school.com',
+                role: 'admin'
+            },
+            'teacher1': {
+                username: 'teacher1',
+                password: hashPassword('teacher123'),
+                name: 'อาจารย์สมหญิง ใจดี',
+                email: 'teacher1@school.com',
+                role: 'teacher',
+                subjects: ['คณิตศาสตร์', 'ฟิสิกส์']
+            },
+            'student1': {
+                username: 'student1',
+                password: hashPassword('01012010'),
+                name: 'นักเรียนสมศักดิ์ เก่งมาก',
+                email: 'student1@school.com',
+                role: 'student',
+                class: 'ม.1/1',
+                studentId: 'S001'
+            }
         };
 
-        /* ----------------- Helpers ----------------- */
-        function showNotification(message, type='success'){
-            const existing = document.querySelector('.notification'); if (existing) existing.remove();
-            const n = document.createElement('div'); n.className = 'notification'; n.innerHTML = `<div style="display:flex;gap:10px;align-items:center;">${type==='success'?'✅':type==='error'?'❌':'⚠️'} <span>${message}</span></div>`;
-            document.body.appendChild(n);
-            setTimeout(()=>{ n.remove(); },5000);
+        let demoSubjects = {
+            'math': { id: 'math', name: 'คณิตศาสตร์', teacher: 'teacher1', class: 'ม.1/1' },
+            'physics': { id: 'physics', name: 'ฟิสิกส์', teacher: 'teacher1', class: 'ม.1/1' },
+            'chemistry': { id: 'chemistry', name: 'เคมี', teacher: 'teacher2', class: 'ม.1/2' }
+        };
+
+        let demoAttendance = {};
+        let demoSettings = {
+            schoolStartTime: '08:00',
+            schoolEndTime: '15:30',
+            lateThreshold: '08:15'
+        };
+
+        // Utility Functions
+        function hashPassword(password) {
+            return CryptoJS.SHA256(password).toString();
         }
 
-        function showModal(id){ document.getElementById(id).style.display = 'flex'; }
-        function closeModal(id){ document.getElementById(id).style.display = 'none'; }
+        function showNotification(message, type = 'success') {
+            // Remove existing notifications
+            const existing = document.querySelector('.notification');
+            if (existing) {
+                existing.remove();
+            }
 
-        /* ----------------- Database wrappers (Firestore first) ----------------- */
-        async function saveToDatabase(collection, docId, data){
-            if (isFirebaseEnabled){
-                try{
-                    await db.collection(collection).doc(docId).set(data, { merge: true });
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span>${type === 'success' ? '✅' : type === 'error' ? '❌' : '⚠️'}</span>
+                    <span>${message}</span>
+                </div>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.remove();
+                }
+            }, 5000);
+        }
+
+        function generateId() {
+            return Date.now().toString(36) + Math.random().toString(36).substr(2);
+        }
+
+        // Firebase Database Functions
+        async function saveToDatabase(collection, docId, data) {
+            if (isFirebaseEnabled) {
+                try {
+                    await db.collection(collection).doc(docId).set(data);
                     return true;
-                }catch(err){ console.error('saveToDatabase error', err); return false; }
+                } catch (error) {
+                    console.error('Firebase save error:', error);
+                    return false;
+                }
             } else {
-                // demo fallback (in-memory)
-                if (collection === 'users') demoUsers[docId] = data;
+                // Demo mode - save to memory
+                if (collection === 'users') {
+                    demoUsers[docId] = data;
+                } else if (collection === 'subjects') {
+                    demoSubjects[docId] = data;
+                } else if (collection === 'attendance') {
+                    demoAttendance[docId] = data;
+                } else if (collection === 'settings') {
+                    demoSettings = { ...demoSettings, ...data };
+                }
                 return true;
             }
         }
 
-        async function getFromDatabase(collection, docId=null){
-            if (isFirebaseEnabled){
-                try{
-                    if (docId){
+        async function getFromDatabase(collection, docId = null) {
+            if (isFirebaseEnabled) {
+                try {
+                    if (docId) {
                         const doc = await db.collection(collection).doc(docId).get();
                         return doc.exists ? doc.data() : null;
                     } else {
-                        const snap = await db.collection(collection).get();
-                        const out = {};
-                        snap.forEach(d=> out[d.id] = d.data());
-                        return out;
+                        const snapshot = await db.collection(collection).get();
+                        const data = {};
+                        snapshot.forEach(doc => {
+                            data[doc.id] = doc.data();
+                        });
+                        return data;
                     }
-                }catch(err){ console.error('getFromDatabase error', err); return null; }
-            } else {
-                if (collection === 'users') return docId ? demoUsers[docId] : demoUsers;
-                return null;
-            }
-        }
-
-        async function deleteFromDatabase(collection, docId){
-            if (isFirebaseEnabled){
-                try{ await db.collection(collection).doc(docId).delete(); return true; }catch(err){ console.error(err); return false; }
-            } else {
-                if (collection === 'users') delete demoUsers[docId]; return true;
-            }
-        }
-
-        /* ----------------- Authentication & UI flow ----------------- */
-        // Listen for auth state changes
-        if (isFirebaseEnabled){
-            auth.onAuthStateChanged(async (user) => {
-                if (user){
-                    currentUser = user.uid;
-                    const doc = await db.collection('users').doc(user.uid).get();
-                    if (doc.exists){ currentUserData = doc.data(); }
-                    else {
-                        // create minimal profile
-                        currentUserData = { name: user.email, email: user.email, role: 'student' };
-                        await db.collection('users').doc(user.uid).set(currentUserData);
-                    }
-                    postLogin();
-                } else {
-                    currentUser = null; currentUserData = null;
-                    document.getElementById('loginSection').style.display = 'flex';
-                    document.getElementById('dashboardSection').classList.remove('active');
-                }
-            });
-        }
-
-        // Login handler
-        document.getElementById('loginForm').addEventListener('submit', async (e)=>{
-            e.preventDefault();
-            const username = document.getElementById('username').value.trim();
-            const password = document.getElementById('password').value.trim();
-            const roleSelect = document.getElementById('role').value;
-
-            if (isFirebaseEnabled){
-                // require e-mail login when using Firebase Auth
-                if (!username.includes('@')){
-                    showNotification('เมื่อใช้ Firebase ต้องใส่อีเมลในช่องชื่อผู้ใช้ (username)', 'error');
-                    return;
-                }
-                try{
-                    document.getElementById('loginSpinner').classList.remove('hidden');
-                    document.getElementById('loginText').textContent = 'กำลังเข้าสู่ระบบ...';
-                    const userCred = await auth.signInWithEmailAndPassword(username, password);
-                    // onAuthStateChanged will handle UI update
-                }catch(err){
-                    console.error(err);
-                    showNotification('เข้าสู่ระบบล้มเหลว: ' + (err.message || err), 'error');
-                }finally{
-                    document.getElementById('loginSpinner').classList.add('hidden');
-                    document.getElementById('loginText').textContent = 'เข้าสู่ระบบ';
+                } catch (error) {
+                    console.error('Firebase get error:', error);
+                    return null;
                 }
             } else {
-                // Demo fallback: username-based
-                const hashed = CryptoJS.SHA256(password).toString();
-                const user = demoUsers[username];
-                if (user && user.password === hashed){
-                    currentUser = username; currentUserData = user; postLogin();
-                } else {
-                    showNotification('ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง (demo)', 'error');
+                // Demo mode - get from memory
+                if (collection === 'users') {
+                    return docId ? demoUsers[docId] : demoUsers;
+                } else if (collection === 'subjects') {
+                    return docId ? demoSubjects[docId] : demoSubjects;
+                } else if (collection === 'attendance') {
+                    return docId ? demoAttendance[docId] : demoAttendance;
+                } else if (collection === 'settings') {
+                    return demoSettings;
                 }
             }
-        });
-
-        // Post login UI setup
-        function postLogin(){
-            document.getElementById('loginSection').style.display = 'none';
-            document.getElementById('dashboardSection').classList.add('active');
-            document.getElementById('userName').textContent = currentUserData.name || currentUserData.email || 'ผู้ใช้';
-            document.getElementById('userRole').textContent = currentUserData.role || '';
-            generateNavTabs(currentUserData.role || 'student');
-            showTab('dashboard');
-            showNotification('ยินดีต้อนรับ ' + (currentUserData.name || currentUserData.email), 'success');
         }
 
-        async function logout(){
-            if (isFirebaseEnabled){
-                try{ await auth.signOut(); }catch(err){ console.error(err); }
+        async function deleteFromDatabase(collection, docId) {
+            if (isFirebaseEnabled) {
+                try {
+                    await db.collection(collection).doc(docId).delete();
+                    return true;
+                } catch (error) {
+                    console.error('Firebase delete error:', error);
+                    return false;
+                }
+            } else {
+                // Demo mode - delete from memory
+                if (collection === 'users') {
+                    delete demoUsers[docId];
+                } else if (collection === 'subjects') {
+                    delete demoSubjects[docId];
+                } else if (collection === 'attendance') {
+                    delete demoAttendance[docId];
+                }
+                return true;
             }
-            currentUser = null; currentUserData = null;
-            document.getElementById('loginSection').style.display = 'flex';
+        }
+
+        // Authentication Functions
+        async function login(username, password, role) {
+            const hashedPassword = hashPassword(password);
+            const userData = await getFromDatabase('users', username);
+            
+            if (userData && userData.password === hashedPassword && userData.role === role) {
+                currentUser = username;
+                currentUserData = userData;
+                return true;
+            }
+            return false;
+        }
+
+        function logout() {
+            currentUser = null;
+            currentUserData = null;
+            document.getElementById('loginSection').style.display = 'block';
             document.getElementById('dashboardSection').classList.remove('active');
+            document.getElementById('loginForm').reset();
         }
 
-        /* ----------------- User creation (register) ----------------- */
-        document.getElementById('userForm').addEventListener('submit', async (e)=>{
-            e.preventDefault();
-            const newUsername = document.getElementById('newUsername').value.trim();
-            const newName = document.getElementById('newName').value.trim();
-            const newEmail = document.getElementById('newEmail').value.trim();
-            const newRole = document.getElementById('newRole').value;
-            const newPassword = document.getElementById('newPassword').value;
-
-            if (!newEmail || !newPassword || !newName){ showNotification('กรุณากรอกชื่อ อีเมล และรหัสผ่าน', 'error'); return; }
-
-            if (isFirebaseEnabled){
-                try{
-                    const userCred = await auth.createUserWithEmailAndPassword(newEmail, newPassword);
-                    const uid = userCred.user.uid;
-                    const profile = { name: newName, email: newEmail, role: newRole };
-                    await db.collection('users').doc(uid).set(profile);
-                    showNotification('สร้างผู้ใช้ใหม่เรียบร้อย (uid: ' + uid + ')', 'success');
-                    closeModal('userModal');
-                }catch(err){ console.error(err); showNotification('สร้างผู้ใช้ล้มเหลว: ' + (err.message||err), 'error'); }
-            } else {
-                // demo mode: save to in-memory demoUsers keyed by username
-                if (!newUsername){ showNotification('ในโหมด demo ต้องระบุชื่อผู้ใช้ (username)', 'error'); return; }
-                demoUsers[newUsername] = { username: newUsername, password: CryptoJS.SHA256(newPassword).toString(), name: newName, email: newEmail, role: newRole };
-                showNotification('สร้างผู้ใช้ demo เรียบร้อย', 'success');
-                closeModal('userModal');
-            }
-        });
-
-        /* ----------------- Navigation ----------------- */
-        function generateNavTabs(role){
-            const nav = document.getElementById('navTabs'); nav.innerHTML = '';
-            const base = [ 'dashboard', 'attendance', 'reports', 'subjects', 'profile' ];
-            const adminOnly = [ 'users', 'settings' ];
-            const tabs = role === 'admin' ? base.concat(adminOnly) : base;
-            const labels = { dashboard:'แดชบอร์ด', attendance:'เช็คชื่อ', reports:'รายงาน', subjects:'วิชา', users:'ผู้ใช้งาน', settings:'ตั้งค่า', profile:'โปรไฟล์' };
-            tabs.forEach((t,i)=>{
-                const btn = document.createElement('button'); btn.className = 'nav-tab' + (i===0?' active':''); btn.textContent = labels[t] || t; btn.onclick = ()=> showTab(t); nav.appendChild(btn);
+        // UI Functions
+        function showTab(tabName) {
+            activeTab = tabName;
+            
+            // Update active tab button
+            document.querySelectorAll('.nav-tab').forEach(tab => {
+                tab.classList.remove('active');
             });
-        }
-
-        function showTab(tabName){
-            document.querySelectorAll('.nav-tab').forEach(tb=> tb.classList.remove('active'));
-            Array.from(document.querySelectorAll('.nav-tab')).find(b=>b.textContent===tabName || b.onclick && b.onclick.toString().includes("showTab('"+tabName+"')"))?.classList.add('active');
+            document.querySelector(`[onclick="showTab('${tabName}')"]`)?.classList.add('active');
+            
+            // Load tab content
             loadTabContent(tabName);
         }
 
-        /* ----------------- Basic Tab loaders (kept simple / demo) ----------------- */
-        function loadTabContent(tabName){
+        function loadTabContent(tabName) {
             const content = document.getElementById('tabContent');
-            switch(tabName){
-                case 'dashboard': loadDashboard(); break;
-                case 'attendance': loadAttendance(); break;
-                case 'reports': loadReports(); break;
-                case 'subjects': loadSubjects(); break;
-                case 'users': loadUsers(); break;
-                case 'settings': loadSettings(); break;
-                case 'profile': loadProfile(); break;
-                default: content.innerHTML = '<div class="card"><h3>ไม่พบหน้านี้</h3></div>';
+            
+            switch(tabName) {
+                case 'dashboard':
+                    loadDashboard();
+                    break;
+                case 'attendance':
+                    loadAttendance();
+                    break;
+                case 'reports':
+                    loadReports();
+                    break;
+                case 'subjects':
+                    loadSubjects();
+                    break;
+                case 'users':
+                    loadUsers();
+                    break;
+                case 'settings':
+                    loadSettings();
+                    break;
+                case 'profile':
+                    loadProfile();
+                    break;
+                default:
+                    content.innerHTML = '<div class="card"><h3>ไม่พบหน้านี้</h3></div>';
             }
         }
 
-        function loadDashboard(){
+        function loadDashboard() {
             const content = document.getElementById('tabContent');
+            
+            // Generate stats based on role
             let statsHTML = '';
-            if ((currentUserData.role||'').toLowerCase() === 'admin'){
-                statsHTML = `<div class="stats-grid"> <div class="stat-card"><div class="stat-value">--</div><div class="stat-label">นักเรียนทั้งหมด</div></div><div class="stat-card"><div class="stat-value">--</div><div class="stat-label">ครูทั้งหมด</div></div></div>`;
-            } else if ((currentUserData.role||'').toLowerCase()==='teacher'){
-                statsHTML = `<div class="stats-grid"><div class="stat-card"><div class="stat-value">--</div><div class="stat-label">วิชาที่สอน</div></div></div>`;
+            if (currentUserData.role === 'admin') {
+                statsHTML = `
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-value">150</div>
+                            <div class="stat-label">นักเรียนทั้งหมด</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value">25</div>
+                            <div class="stat-label">ครูทั้งหมด</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value">142</div>
+                            <div class="stat-label">เข้าเรียนวันนี้</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value">8</div>
+                            <div class="stat-label">ขาดเรียนวันนี้</div>
+                        </div>
+                    </div>
+                `;
+            } else if (currentUserData.role === 'teacher') {
+                statsHTML = `
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-value">${currentUserData.subjects?.length || 0}</div>
+                            <div class="stat-label">วิชาที่สอน</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value">45</div>
+                            <div class="stat-label">นักเรียนในความรับผิดชอบ</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value">42</div>
+                            <div class="stat-label">เข้าเรียนวันนี้</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value">3</div>
+                            <div class="stat-label">ขาดเรียนวันนี้</div>
+                        </div>
+                    </div>
+                `;
             } else {
-                statsHTML = `<div class="stats-grid"><div class="stat-card"><div class="stat-value">--</div><div class="stat-label">เปอร์เซ็นต์การเข้าเรียน</div></div></div>`;
+                statsHTML = `
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-value">95%</div>
+                            <div class="stat-label">เปอร์เซ็นต์การเข้าเรียน</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value">18</div>
+                            <div class="stat-label">วันที่เข้าเรียน (เดือนนี้)</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value">1</div>
+                            <div class="stat-label">วันที่ขาดเรียน</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value">2</div>
+                            <div class="stat-label">วันที่มาสาย</div>
+                        </div>
+                    </div>
+                `;
             }
-            content.innerHTML = ` ${statsHTML} <div class="card"><div class="card-header"><h3 class="card-title">📊 กราฟการเข้าเรียน (7 วันย้อนหลัง)</h3></div><div class="chart-container"><canvas id="attendanceChart"></canvas></div></div>`;
-            setTimeout(()=> loadAttendanceChart(), 100);
+
+            content.innerHTML = `
+                ${statsHTML}
+                
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">📊 กราฟการเข้าเรียน (7 วันย้อนหลัง)</h3>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="attendanceChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">🔔 ข่าวสารล่าสุด</h3>
+                    </div>
+                    <div style="padding: 20px 0;">
+                        <div style="border-left: 4px solid var(--secondary-green); padding-left: 15px; margin-bottom: 15px;">
+                            <h4 style="margin: 0 0 5px 0; color: var(--text-dark);">ประกาศสำคัญ</h4>
+                            <p style="margin: 0; color: var(--text-light);">กำหนดการสอบกลางภาค วันที่ 15-20 มีนาคม 2567</p>
+                        </div>
+                        <div style="border-left: 4px solid var(--accent-yellow); padding-left: 15px; margin-bottom: 15px;">
+                            <h4 style="margin: 0 0 5px 0; color: var(--text-dark);">กิจกรรมโรงเรียน</h4>
+                            <p style="margin: 0; color: var(--text-light);">วันกีฬาสี ประจำปี 2567 วันที่ 25 มีนาคม</p>
+                        </div>
+                        <div style="border-left: 4px solid var(--primary-green); padding-left: 15px;">
+                            <h4 style="margin: 0 0 5px 0; color: var(--text-dark);">ระบบใหม่</h4>
+                            <p style="margin: 0; color: var(--text-light);">เปิดใช้งานระบบเช็คชื่อออนไลน์แล้ว</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // Load chart after content is rendered
+            setTimeout(() => {
+                loadAttendanceChart();
+            }, 100);
         }
 
-        function loadAttendanceChart(){
-            const ctx = document.getElementById('attendanceChart'); if (!ctx) return;
-            new Chart(ctx, {
-                type: 'line', data: { labels:['จันทร์','อังคาร','พุธ','พฤหัส','ศุกร์','เสาร์','อาทิตย์'], datasets:[{ label:'เข้าเรียน', data:[120,130,125,140,135,0,0], borderColor:'rgb(76,175,80)', backgroundColor:'rgba(76,175,80,0.1)', tension:0.4 }] },
-                options:{ responsive:true, maintainAspectRatio:false }
+        function loadAttendanceChart() {
+            const ctx = document.getElementById('attendanceChart');
+            if (!ctx) return;
+
+            const chart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['เข้าเรียน', 'ขาดเรียน', 'มาสาย'],
+                    datasets: [{
+                        data: [85, 10, 5],
+                        backgroundColor: [
+                            'rgba(76, 175, 80, 0.8)',
+                            'rgba(244, 67, 54, 0.8)',
+                            'rgba(255, 193, 7, 0.8)'
+                        ],
+                        borderColor: [
+                            'rgba(76, 175, 80, 1)',
+                            'rgba(244, 67, 54, 1)',
+                            'rgba(255, 193, 7, 1)'
+                        ],
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
             });
         }
 
-        function loadAttendance(){
-            const content = document.getElementById('tabContent');
-            if ((currentUserData.role||'') === 'teacher'){
-                content.innerHTML = `<div class="card"><div class="card-header"><h3 class="card-title">📝 เช็คชื่อรายวัน</h3></div><div style="padding:20px;">เลือกวิชาและวันที่เพื่อลงชื่อ</div></div>`;
-            } else if ((currentUserData.role||'') === 'student'){
-                content.innerHTML = `<div class="card"><div class="card-header"><h3 class="card-title">📊 ประวัติการเข้าเรียนของฉัน</h3></div><div style="padding:20px;">ข้อมูลตัวอย่าง</div></div>`;
-            } else {
-                content.innerHTML = `<div class="card"><div class="card-header"><h3 class="card-title">📊 สรุปการเข้าเรียนทั้งหมด</h3></div><div style="padding:20px;">ข้อมูลตัวอย่าง</div></div>`;
+        function generateReport() {
+            const startDate = document.getElementById('reportStartDate')?.value;
+            const endDate = document.getElementById('reportEndDate')?.value;
+            const reportType = document.getElementById('reportType')?.value;
+            
+            if (!startDate || !endDate) {
+                showNotification('กรุณาเลือกช่วงวันที่', 'error');
+                return;
             }
+
+            const reportResults = document.getElementById('reportResults');
+            
+            // Demo report data
+            let reportData = '';
+            switch(reportType) {
+                case 'summary':
+                    reportData = `
+                        <h4>📊 สรุปภาพรวมการเข้าเรียน (${formatDate(startDate)} - ${formatDate(endDate)})</h4>
+                        <div class="stats-grid" style="margin-top: 20px;">
+                            <div class="stat-card">
+                                <div class="stat-value">142</div>
+                                <div class="stat-label">เข้าเรียนเฉลี่ย/วัน</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value">8</div>
+                                <div class="stat-label">ขาดเรียนเฉลี่ย/วัน</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value">3</div>
+                                <div class="stat-label">มาสายเฉลี่ย/วัน</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value">94.7%</div>
+                                <div class="stat-label">เปอร์เซ็นต์เข้าเรียน</div>
+                            </div>
+                        </div>
+                    `;
+                    break;
+                case 'absent':
+                    reportData = `
+                        <h4>❌ นักเรียนที่ขาดเรียนบ่อย (${formatDate(startDate)} - ${formatDate(endDate)})</h4>
+                        <div class="table-responsive" style="margin-top: 20px;">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>รหัสนักเรียน</th>
+                                        <th>ชื่อ-นามสกุล</th>
+                                        <th>ชั้นเรียน</th>
+                                        <th>จำนวนวันที่ขาด</th>
+                                        <th>เปอร์เซ็นต์</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>S001</td>
+                                        <td>นาย ก ข</td>
+                                        <td>ม.1/1</td>
+                                        <td>5</td>
+                                        <td style="color: #E74C3C;">75%</td>
+                                    </tr>
+                                    <tr>
+                                        <td>S015</td>
+                                        <td>นางสาว ม น</td>
+                                        <td>ม.1/2</td>
+                                        <td>4</td>
+                                        <td style="color: #E74C3C;">80%</td>
+                                    </tr>
+                                    <tr>
+                                        <td>S032</td>
+                                        <td>นาย ป ผ</td>
+                                        <td>ม.2/1</td>
+                                        <td>3</td>
+                                        <td style="color: #F39C12;">85%</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    `;
+                    break;
+                case 'late':
+                    reportData = `
+                        <h4>⏰ นักเรียนที่มาสายบ่อย (${formatDate(startDate)} - ${formatDate(endDate)})</h4>
+                        <div class="table-responsive" style="margin-top: 20px;">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>รหัสนักเรียน</th>
+                                        <th>ชื่อ-นามสกุล</th>
+                                        <th>ชั้นเรียน</th>
+                                        <th>จำนวนครั้งที่สาย</th>
+                                        <th>เวลาสายเฉลี่ย</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>S007</td>
+                                        <td>นาย จ ฉ</td>
+                                        <td>ม.1/1</td>
+                                        <td>8</td>
+                                        <td>08:25</td>
+                                    </tr>
+                                    <tr>
+                                        <td>S022</td>
+                                        <td>นางสาว ช ซ</td>
+                                        <td>ม.1/3</td>
+                                        <td>6</td>
+                                        <td>08:20</td>
+                                    </tr>
+                                    <tr>
+                                        <td>S045</td>
+                                        <td>นาย ฟ ภ</td>
+                                        <td>ม.2/2</td>
+                                        <td>5</td>
+                                        <td>08:18</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    `;
+                    break;
+                default:
+                    reportData = `
+                        <h4>📋 รายงานรายละเอียด (${formatDate(startDate)} - ${formatDate(endDate)})</h4>
+                        <div class="table-responsive" style="margin-top: 20px;">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>วันที่</th>
+                                        <th>วิชา</th>
+                                        <th>ครูผู้สอน</th>
+                                        <th>เข้าเรียน</th>
+                                        <th>ขาดเรียน</th>
+                                        <th>มาสาย</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>10/03/2567</td>
+                                        <td>คณิตศาสตร์</td>
+                                        <td>อ.สมหญิง</td>
+                                        <td>42</td>
+                                        <td>2</td>
+                                        <td>1</td>
+                                    </tr>
+                                    <tr>
+                                        <td>10/03/2567</td>
+                                        <td>ฟิสิกส์</td>
+                                        <td>อ.สมชาย</td>
+                                        <td>40</td>
+                                        <td>3</td>
+                                        <td>2</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    `;
+            }
+            
+            reportResults.innerHTML = reportData;
         }
 
-        function loadReports(){ document.getElementById('tabContent').innerHTML = `<div class="card"><h3>สร้างรายงาน (ทดลอง)</h3></div>`; }
-        function loadSubjects(){ document.getElementById('tabContent').innerHTML = `<div class="card"><h3>จัดการรายวิชา</h3><button class="btn btn-success" onclick="showModal('userModal')">➕ เพิ่มผู้ใช้ใหม่</button></div>`; }
-        function loadUsers(){
-            if ((currentUserData.role||'') !== 'admin'){ document.getElementById('tabContent').innerHTML = `<div class="card"><h3>🚫 คุณไม่มีสิทธิ์เข้าถึงหน้านี้</h3></div>`; return; }
-            document.getElementById('tabContent').innerHTML = `<div class="card"><h3>ผู้ใช้งาน (จาก Firestore)</h3><div id="usersList">กำลังโหลด...</div></div>`;
-            // load users list
-            (async ()=>{
-                const users = await getFromDatabase('users');
-                const listEl = document.getElementById('usersList');
-                if (!users) { listEl.innerHTML = '<p>ไม่พบข้อมูล</p>'; return; }
-                listEl.innerHTML = Object.keys(users).map(uid=>{
-                    const u = users[uid];
-                    return `<div style="display:flex;justify-content:space-between;padding:10px;border-bottom:1px solid #eee;"><div><strong>${u.name||u.email||uid}</strong><br><small>${u.email||''} | ${u.role||''}</small></div><div><button class="btn" onclick="editUser('${uid}')">✏️</button><button class="btn" onclick="deleteUserConfirm('${uid}')">🗑️</button></div></div>`;
-                }).join('');
-            })();
+        function exportReport(format) {
+            const startDate = document.getElementById('reportStartDate')?.value;
+            const endDate = document.getElementById('reportEndDate')?.value;
+            const reportType = document.getElementById('reportType')?.value;
+            
+            if (!startDate || !endDate) {
+                showNotification('กรุณาสร้างรายงานก่อน', 'error');
+                return;
+            }
+
+            // Demo data for export
+            const exportData = [
+                ['วันที่', 'วิชา', 'ครูผู้สอน', 'เข้าเรียน', 'ขาดเรียน', 'มาสาย'],
+                ['10/03/2567', 'คณิตศาสตร์', 'อ.สมหญิง', '42', '2', '1'],
+                ['10/03/2567', 'ฟิสิกส์', 'อ.สมชาย', '40', '3', '2'],
+                ['09/03/2567', 'เคมี', 'อ.สมศรี', '38', '5', '2']
+            ];
+
+            if (format === 'xlsx') {
+                const ws = XLSX.utils.aoa_to_sheet(exportData);
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, 'รายงานการเข้าเรียน');
+                XLSX.writeFile(wb, `รายงานการเข้าเรียน_${startDate}_${endDate}.xlsx`);
+            } else {
+                const csvContent = exportData.map(row => row.join(',')).join('\n');
+                const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = `รายงานการเข้าเรียน_${startDate}_${endDate}.csv`;
+                link.click();
+            }
+
+            showNotification(`Export ${format.toUpperCase()} เรียบร้อยแล้ว! 📄`);
         }
 
-        function editUser(uid){ showNotification('ฟังก์ชันแก้ไขผู้ใช้ยังไม่ถูกเปิดใช้งาน', 'warning'); }
-        async function deleteUserConfirm(uid){ if (!confirm('ต้องการลบผู้ใช้นี้จริงหรือไม่?')) return; await deleteFromDatabase('users', uid); showNotification('ลบเรียบร้อย', 'success'); loadUsers(); }
-
-        function loadSettings(){ if ((currentUserData.role||'')!=='admin'){ document.getElementById('tabContent').innerHTML = `<div class="card"><h3>🚫 คุณไม่มีสิทธิ์เข้าถึงหน้านี้</h3></div>`; return; } document.getElementById('tabContent').innerHTML = `<div class="card"><h3>ตั้งค่าระบบ</h3></div>`; }
-        function loadProfile(){ document.getElementById('tabContent').innerHTML = `<div class="card"><h3>โปรไฟล์ของฉัน</h3><p>ชื่อ: ${currentUserData.name||''}</p><p>อีเมล: ${currentUserData.email||''}</p><p>บทบาท: ${currentUserData.role||''}</p></div>`; }
-
-        /* ----------------- Utility on load ----------------- */
-        // If firebase is not enabled, show demo warning
-        if (!isFirebaseEnabled){
-            showNotification('Firebase ไม่สามารถเริ่มต้นได้ — ทำงานในโหมด demo', 'warning');
+        function loadSubjects() {
+            const content = document.getElementById('tabContent');
+            
+            content.innerHTML = `
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">📚 จัดการรายวิชา</h3>
+                        <button class="btn btn-success" onclick="showModal('subjectModal')">➕ เพิ่มวิชาใหม่</button>
+                    </div>
+                    
+                    <div class="search-box">
+                        <input type="text" class="search-input" placeholder="🔍 ค้นหารายวิชา..." onkeyup="searchSubjects(this.value)">
+                        <span class="search-icon">🔍</span>
+                    </div>
+                    
+                    <div id="subjectsList">
+                        ${loadSubjectsList()}
+                    </div>
+                </div>
+            `;
         }
 
-        // Small helper to open add-user modal from UI
-        function showAddUserModal(){ showModal('userModal'); }
+        function loadSubjectsList() {
+            // Demo subjects data
+            const subjects = [
+                { id: 'math', name: 'คณิตศาสตร์', teacher: 'อ.สมหญิง', class: 'ม.1/1', students: 45 },
+                { id: 'physics', name: 'ฟิสิกส์', teacher: 'อ.สมชาย', class: 'ม.1/1', students: 45 },
+                { id: 'chemistry', name: 'เคมี', teacher: 'อ.สมศรี', class: 'ม.1/2', students: 42 },
+                { id: 'biology', name: 'ชีววิทยา', teacher: 'อ.สมใจ', class: 'ม.2/1', students: 40 }
+            ];
 
-    </script>
-</body>
-</html>
+            return subjects.map(subject => `
+                <div class="user-card">
+                    <div class="user-info-card">
+                        <div class="user-avatar">📚</div>
+                        <div class="user-details">
+                            <h4>${subject.name}</h4>
+                            <p>ครูผู้สอน: ${subject.teacher} | ชั้น: ${subject.class} | นักเรียน: ${subject.students} คน</p>
+                        </div>
+                    </div>
+                    <div class="user-actions">
+                        <button class="btn btn-sm btn-success" onclick="editSubject('${subject.id}')">✏️ แก้ไข</button>
+                        <button class="btn btn-sm btn-warning" onclick="viewSubjectReport('${subject.id}')">📊 รายงาน</button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteSubject('${subject.id}')">🗑️ ลบ</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function loadUsers() {
+            if (currentUserData.role !== 'admin') {
+                document.getElementById('tabContent').innerHTML = `
+                    <div class="card">
+                        <h3 style="text-align: center; color: var(--text-light);">🚫 คุณไม่มีสิทธิ์เข้าถึงหน้านี้</h3>
+                    </div>
+                `;
+                return;
+            }
+
+            const content = document.getElementById('tabContent');
+            
+            content.innerHTML = `
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">👥 จัดการผู้ใช้งาน</h3>
+                        <button class="btn btn-success" onclick="showAddUserModal()">➕ เพิ่มผู้ใช้ใหม่</button>
+                    </div>
+                    
+                    <div class="nav-tabs" style="margin-bottom: 20px;">
+                        <button class="nav-tab active" onclick="filterUsers('all')">👥 ทั้งหมด</button>
+                        <button class="nav-tab" onclick="filterUsers('admin')">👑 ผู้ดูแลระบบ</button>
+                        <button class="nav-tab" onclick="filterUsers('teacher')">👨‍🏫 ครู</button>
+                        <button class="nav-tab" onclick="filterUsers('student')">🎓 นักเรียน</button>
+                    </div>
+                    
+                    <div class="search-box">
+                        <input type="text" class="search-input" placeholder="🔍 ค้นหาผู้ใช้..." onkeyup="searchUsers(this.value)">
+                        <span class="search-icon">🔍</span>
+                    </div>
+                    
+                    <div id="usersList">
+                        ${loadUsersList()}
+                    </div>
+                </div>
+            `;
+        }
+
+        function loadUsersList() {
+            const users = [
+                { id: 'admin1', name: 'ผู้ดูแลระบบ สมชาย', email: 'admin@school.com', role: 'admin', lastLogin: '2024-03-10 14:30' },
+                { id: 'teacher1', name: 'อาจารย์สมหญิง ใจดี', email: 'teacher1@school.com', role: 'teacher', subjects: 'คณิตศาสตร์, ฟิสิกส์', lastLogin: '2024-03-10 08:15' },
+                { id: 'teacher2', name: 'อาจารย์สมศรี สวยงาม', email: 'teacher2@school.com', role: 'teacher', subjects: 'เคมี, ชีววิทยา', lastLogin: '2024-03-09 16:45' },
+                { id: 'student1', name: 'นักเรียนสมศักดิ์ เก่งมาก', email: 'student1@school.com', role: 'student', class: 'ม.1/1', lastLogin: '2024-03-10 07:45' }
+            ];
+
+            return users.map(user => {
+                const roleIcon = user.role === 'admin' ? '👑' : user.role === 'teacher' ? '👨‍🏫' : '🎓';
+                const roleText = user.role === 'admin' ? 'ผู้ดูแลระบบ' : user.role === 'teacher' ? 'ครู' : 'นักเรียน';
+                
+                let subtitle = `${roleText} | เข้าสู่ระบบล่าสุด: ${user.lastLogin}`;
+                if (user.subjects) subtitle += ` | วิชาที่สอน: ${user.subjects}`;
+                if (user.class) subtitle += ` | ชั้น: ${user.class}`;
+
+                return `
+                    <div class="user-card" data-role="${user.role}">
+                        <div class="user-info-card">
+                            <div class="user-avatar">${roleIcon}</div>
+                            <div class="user-details">
+                                <h4>${user.name}</h4>
+                                <p>${subtitle}</p>
+                                <p style="font-size: 0.85rem; color: var(--text-light);">${user.email}</p>
+                            </div>
+                        </div>
+                        <div class="user-actions">
+                            <button class="btn btn-sm btn-success" onclick="editUser('${user.id}')">✏️ แก้ไข</button>
+                            <button class="btn btn-sm btn-warning" onclick="resetPassword('${user.id}')">🔑 รีเซ็ตรหัส</button>
+                            <button class="btn btn-sm btn-danger" onclick="deleteUser('${user.id}')">🗑️ ลบ</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function filterUsers(role) {
+            // Update active tab
+            document.querySelectorAll('#tabContent .nav-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            // Filter users
+            const userCards = document.querySelectorAll('.user-card');
+            userCards.forEach(card => {
+                if (role === 'all' || card.dataset.role === role) {
+                    card.style.display = 'flex';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        }
+
+        function searchUsers(query) {
+            const userCards = document.querySelectorAll('.user-card');
+            userCards.forEach(card => {
+                const text = card.textContent.toLowerCase();
+                if (text.includes(query.toLowerCase())) {
+                    card.style.display = 'flex';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        }
+
+        function loadSettings() {
+            if (currentUserData.role !== 'admin') {
+                document.getElementById('tabContent').innerHTML = `
+                    <div class="card">
+                        <h3 style="text-align: center; color: var(--text-light);">🚫 คุณไม่มีสิทธิ์เข้าถึงหน้านี้</h3>
+                    </div>
+                `;
+                return;
+            }
+
+            const content = document.getElementById('tabContent');
+            
+            content.innerHTML = `
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">⚙️ ตั้งค่าระบบ</h3>
+                    </div>
+                    
+                    <form id="settingsForm">
+                        <div class="settings-section">
+                            <h3>🕐 ตั้งค่าเวลาเรียน</h3>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="schoolStartTime">เวลาเริ่มเรียน:</label>
+                                    <input type="time" id="schoolStartTime" class="form-control" value="08:00">
+                                </div>
+                                <div class="form-group">
+                                    <label for="schoolEndTime">เวลาเลิกเรียน:</label>
+                                    <input type="time" id="schoolEndTime" class="form-control" value="15:30">
+                                </div>
+                                <div class="form-group">
+                                    <label for="lateThreshold">ถือว่าสายเมื่อมาหลัง:</label>
+                                    <input type="time" id="lateThreshold" class="form-control" value="08:15">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="settings-section">
+                            <h3>🏫 ข้อมูลโรงเรียน</h3>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="schoolName">ชื่อโรงเรียน:</label>
+                                    <input type="text" id="schoolName" class="form-control" value="โรงเรียนบ้านโลหัน">
+                                </div>
+                                <div class="form-group">
+                                    <label for="schoolAddress">ที่อยู่:</label>
+                                    <textarea id="schoolAddress" class="form-control" rows="3">123 หมู่ 5 ตำบลบ้านโลหัน อำเภอเมือง จังหวัดสงขลา 90110</textarea>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="settings-section">
+                            <h3>🔔 การแจ้งเตือน</h3>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>
+                                        <input type="checkbox" id="emailNotifications" checked>
+                                        แจ้งเตือนผ่านอีเมล
+                                    </label>
+                                </div>
+                                <div class="form-group">
+                                    <label>
+                                        <input type="checkbox" id="smsNotifications">
+                                        แจ้งเตือนผ่าน SMS
+                                    </label>
+                                </div>
+                                <div class="form-group">
+                                    <label>
+                                        <input type="checkbox" id="dailyReports" checked>
+                                        รายงานประจำวันอัตโนมัติ
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="settings-section">
+                            <h3>📊 การสำรองข้อมูล</h3>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="backupFreq">ความถี่การสำรองข้อมูล:</label>
+                                    <select id="backupFreq" class="form-control">
+                                        <option value="daily">รายวัน</option>
+                                        <option value="weekly" selected>รายสัปดาห์</option>
+                                        <option value="monthly">รายเดือน</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>&nbsp;</label>
+                                    <button type="button" class="btn btn-warning" onclick="backupData()">💾 สำรองข้อมูลเดียวนี้</button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div style="text-align: center; margin-top: 30px;">
+                            <button type="submit" class="btn btn-success">💾 บันทึกการตั้งค่า</button>
+                            <button type="button" class="btn btn-secondary" onclick="resetSettings()">🔄 รีเซ็ตเป็นค่าเริ่มต้น</button>
+                        </div>
+                    </form>
+                </div>
+            `;
+
+            // Handle settings form submission
+            document.getElementById('settingsForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const settings = {
+                    schoolStartTime: document.getElementById('schoolStartTime').value,
+                    schoolEndTime: document.getElementById('schoolEndTime').value,
+                    lateThreshold: document.getElementById('lateThreshold').value,
+                    schoolName: document.getElementById('schoolName').value,
+                    schoolAddress: document.getElementById('schoolAddress').value,
+                    emailNotifications: document.getElementById('emailNotifications').checked,
+                    smsNotifications: document.getElementById('smsNotifications').checked,
+                    dailyReports: document.getElementById('dailyReports').checked,
+                    backupFreq: document.getElementById('backupFreq').value
+                };
+
+                saveToDatabase('settings', 'general', settings);
+                showNotification('บันทึกการตั้งค่าเรียบร้อยแล้ว! ⚙️');
+            });
+        }
+
+        function loadProfile() {
+            const content = document.getElementById('tabContent');
+            
+            content.innerHTML = `
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">👤 โปรไฟล์ของฉัน</h3>
+                    </div>
+                    
+                    <div class="profile-section">
+                        <div style="text-align: center; margin-bottom: 30px;">
+                            <div class="user-avatar" style="width: 100px; height: 100px; font-size: 2.5rem; margin: 0 auto 15px;">
+                                ${currentUserData.role === 'admin' ? '👑' : currentUserData.role === 'teacher' ? '👨‍🏫' : '🎓'}
+                            </div>
+                            <h2>${currentUserData.name}</h2>
+                            <p style="color: var(--text-light); font-size: 1.1rem;">
+                                ${currentUserData.role === 'admin' ? 'ผู้ดูแลระบบ' : currentUserData.role === 'teacher' ? 'ครู' : 'นักเรียน'}
+                            </p>
+                        </div>
+                        
+                        <form id="profileForm">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="profileName">ชื่อ-นามสกุล:</label>
+                                    <input type="text" id="profileName" class="form-control" value="${currentUserData.name}">
+                                </div>
+                                <div class="form-group">
+                                    <label for="profileEmail">อีเมล:</label>
+                                    <input type="email" id="profileEmail" class="form-control" value="${currentUserData.email}">
+                                </div>
+                            </div>
+                            
+                            ${currentUserData.role === 'teacher' ? `
+                                <div class="form-group">
+                                    <label for="profileSubjects">วิชาที่สอน:</label>
+                                    <input type="text" id="profileSubjects" class="form-control" value="${(currentUserData.subjects || []).join(', ')}">
+                                    <small style="color: var(--text-light);">แยกแต่ละวิชาด้วยเครื่องหมายจุลภาค (,)</small>
+                                </div>
+                            ` : ''}
+                            
+                            ${currentUserData.role === 'student' ? `
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="profileClass">ชั้นเรียน:</label>
+                                        <input type="text" id="profileClass" class="form-control" value="${currentUserData.class || ''}" readonly>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="profileStudentId">รหัสนักเรียน:</label>
+                                        <input type="text" id="profileStudentId" class="form-control" value="${currentUserData.studentId || ''}" readonly>
+                                    </div>
+                                </div>
+                            ` : ''}
+                            
+                            <hr style="margin: 30px 0;">
+                            
+                            <h4>🔐 เปลี่ยนรหัสผ่าน</h4>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="currentPassword">รหัสผ่านปัจจุบัน:</label>
+                                    <input type="password" id="currentPassword" class="form-control">
+                                </div>
+                                <div class="form-group">
+                                    <label for="newPassword">รหัสผ่านใหม่:</label>
+                                    <input type="password" id="newPassword" class="form-control">
+                                </div>
+                                <div class="form-group">
+                                    <label for="confirmPassword">ยืนยันรหัสผ่านใหม่:</label>
+                                    <input type="password" id="confirmPassword" class="form-control">
+                                </div>
+                            </div>
+                            
+                จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์', 'อาทิตย์'],
+                    datasets: [{
+                        label: 'เข้าเรียน',
+                        data: [142, 138, 145, 140, 144, 0, 0],
+                        borderColor: 'rgb(76, 175, 80)',
+                        backgroundColor: 'rgba(76, 175, 80, 0.1)',
+                        tension: 0.4
+                    }, {
+                        label: 'ขาดเรียน',
+                        data: [8, 12, 5, 10, 6, 0, 0],
+                        borderColor: 'rgb(244, 67, 54)',
+                        backgroundColor: 'rgba(244, 67, 54, 0.1)',
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+
+        function loadAttendance() {
+            const content = document.getElementById('tabContent');
+            
+            let attendanceContent = '';
+            if (currentUserData.role === 'teacher') {
+                attendanceContent = `
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">📝 เช็คชื่อรายวัน</h3>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="attendanceDate">วันที่:</label>
+                                <input type="date" id="attendanceDate" class="form-control" value="${new Date().toISOString().split('T')[0]}">
+                            </div>
+                            <div class="form-group">
+                                <label for="attendanceSubject">วิชา:</label>
+                                <select id="attendanceSubject" class="form-control">
+                                    ${(currentUserData.subjects || []).map(subject => 
+                                        `<option value="${subject}">${subject}</option>`
+                                    ).join('')}
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>&nbsp;</label>
+                                <button class="btn btn-success" onclick="loadStudentList()">📋 โหลดรายชื่อ</button>
+                            </div>
+                        </div>
+                        
+                        <div id="studentAttendanceList">
+                            <p style="text-align: center; color: var(--text-light); padding: 40px 0;">
+                                📋 เลือกวิชาและวันที่ จากนั้นกดปุ่ม "โหลดรายชื่อ"
+                            </p>
+                        </div>
+                    </div>
+                `;
+            } else if (currentUserData.role === 'student') {
+                attendanceContent = `
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">📊 ประวัติการเข้าเรียนของฉัน</h3>
+                        </div>
+                        
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>วันที่</th>
+                                        <th>วิชา</th>
+                                        <th>สถานะ</th>
+                                        <th>เวลา</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>10/03/2567</td>
+                                        <td>คณิตศาสตร์</td>
+                                        <td><span class="status-badge status-present">เข้าเรียน</span></td>
+                                        <td>08:00</td>
+                                    </tr>
+                                    <tr>
+                                        <td>09/03/2567</td>
+                                        <td>ฟิสิกส์</td>
+                                        <td><span class="status-badge status-late">มาสาย</span></td>
+                                        <td>08:20</td>
+                                    </tr>
+                                    <tr>
+                                        <td>08/03/2567</td>
+                                        <td>เคมี</td>
+                                        <td><span class="status-badge status-absent">ขาดเรียน</span></td>
+                                        <td>-</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                `;
+            } else {
+                attendanceContent = `
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">📊 สรุปการเข้าเรียนทั้งหมด</h3>
+                        </div>
+                        
+                        <div class="search-box">
+                            <input type="text" class="search-input" placeholder="🔍 ค้นหานักเรียน, ครู, หรือวิชา...">
+                            <span class="search-icon">🔍</span>
+                        </div>
+                        
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>วันที่</th>
+                                        <th>วิชา</th>
+                                        <th>ครู</th>
+                                        <th>เข้าเรียน</th>
+                                        <th>ขาดเรียน</th>
+                                        <th>มาสาย</th>
+                                        <th>การดำเนินการ</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>10/03/2567</td>
+                                        <td>คণิตศาสตร์</td>
+                                        <td>อ.สมหญิง</td>
+                                        <td><span class="status-badge status-present">42</span></td>
+                                        <td><span class="status-badge status-absent">2</span></td>
+                                        <td><span class="status-badge status-late">1</span></td>
+                                        <td>
+                                            <button class="btn btn-sm btn-success">📊 รายงาน</button>
+                                            <button class="btn btn-sm btn-warning">📤 Export</button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>09/03/2567</td>
+                                        <td>ฟิสิกส์</td>
+                                        <td>อ.สมชาย</td>
+                                        <td><span class="status-badge status-present">40</span></td>
+                                        <td><span class="status-badge status-absent">3</span></td>
+                                        <td><span class="status-badge status-late">2</span></td>
+                                        <td>
+                                            <button class="btn btn-sm btn-success">📊 รายงาน</button>
+                                            <button class="btn btn-sm btn-warning">📤 Export</button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            content.innerHTML = attendanceContent;
+        }
+
+        function loadStudentList() {
+            const subject = document.getElementById('attendanceSubject')?.value;
+            const date = document.getElementById('attendanceDate')?.value;
+            
+            if (!subject || !date) {
+                showNotification('กรุณาเลือกวิชาและวันที่', 'error');
+                return;
+            }
+
+            // Demo student list
+            const students = [
+                { id: 'S001', name: 'นาย ก ข', class: 'ม.1/1' },
+                { id: 'S002', name: 'นางสาว ค ง', class: 'ม.1/1' },
+                { id: 'S003', name: 'นาย จ ฉ', class: 'ม.1/1' },
+                { id: 'S004', name: 'นางสาว ช ซ', class: 'ม.1/1' },
+                { id: 'S005', name: 'นาย ฌ ญ', class: 'ม.1/1' }
+            ];
+
+            const listHtml = `
+                <div style="margin-top: 20px;">
+                    <h4>รายชื่อนักเรียน - ${subject} (${formatDate(date)})</h4>
+                    <div style="margin: 20px 0;">
+                        ${students.map(student => `
+                            <div class="student-item" style="display: flex; justify-content: space-between; align-items: center; padding: 15px; border: 1px solid #E0E0E0; border-radius: 8px; margin-bottom: 10px; background: white;">
+                                <div>
+                                    <strong>${student.name}</strong>
+                                    <span style="color: var(--text-light); margin-left: 10px;">(${student.id})</span>
+                                </div>
+                                <div style="display: flex; gap: 10px;">
+                                    <button class="btn btn-sm btn-success" onclick="markAttendance('${student.id}', 'present')">✅ เข้าเรียน</button>
+                                    <button class="btn btn-sm btn-warning" onclick="markAttendance('${student.id}', 'late')">⏰ มาสาย</button>
+                                    <button class="btn btn-sm btn-danger" onclick="markAttendance('${student.id}', 'absent')">❌ ขาดเรียน</button>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <div style="text-align: center; margin-top: 30px;">
+                        <button class="btn btn-success" onclick="saveAttendance()">💾 บันทึกการเข้าเรียน</button>
+                        <button class="btn btn-warning" onclick="exportAttendance()">📤 Export Excel</button>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('studentAttendanceList').innerHTML = listHtml;
+        }
+
+        function markAttendance(studentId, status) {
+            const studentItem = event.target.closest('.student-item');
+            const buttons = studentItem.querySelectorAll('.btn');
+            
+            // Reset all button styles
+            buttons.forEach(btn => {
+                btn.style.opacity = '0.5';
+            });
+            
+            // Highlight selected button
+            event.target.style.opacity = '1';
+            
+            // Store attendance data
+            if (!window.attendanceData) {
+                window.attendanceData = {};
+            }
+            window.attendanceData[studentId] = status;
+        }
+
+        function saveAttendance() {
+            if (!window.attendanceData || Object.keys(window.attendanceData).length === 0) {
+                showNotification('กรุณาเช็คชื่อนักเรียนก่อน', 'error');
+                return;
+            }
+
+            const subject = document.getElementById('attendanceSubject')?.value;
+            const date = document.getElementById('attendanceDate')?.value;
+            
+            // Save to database
+            const attendanceId = `${subject}_${date}`;
+            const attendanceRecord = {
+                subject: subject,
+                date: date,
+                teacher: currentUser,
+                students: window.attendanceData,
+                timestamp: new Date().toISOString()
+            };
+
+            saveToDatabase('attendance', attendanceId, attendanceRecord);
+            showNotification('บันทึกการเข้าเรียนเรียบร้อยแล้ว! 🎉');
+            
+            // Reset data
+            window.attendanceData = {};
+        }
+
+        function loadReports() {
+            const content = document.getElementById('tabContent');
+            
+            content.innerHTML = `
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">📈 รายงานการเข้าเรียน</h3>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="reportStartDate">วันที่เริ่มต้น:</label>
+                            <input type="date" id="reportStartDate" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label for="reportEndDate">วันที่สิ้นสุด:</label>
+                            <input type="date" id="reportEndDate" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label for="reportType">ประเภทรายงาน:</label>
+                            <select id="reportType" class="form-control">
+                                <option value="summary">สรุปภาพรวม</option>
+                                <option value="detailed">รายละเอียด</option>
+                                <option value="absent">นักเรียนที่ขาดเรียนบ่อย</option>
+                                <option value="late">นักเรียนที่มาสายบ่อย</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+                        <button class="btn btn-success" onclick="generateReport()">📊 สร้างรายงาน</button>
+                        <button class="btn btn-warning" onclick="exportReport('csv')">📄 Export CSV</button>
+                        <button class="btn btn-warning" onclick="exportReport('xlsx')">📊 Export Excel</button>
+                    </div>
+                    
+                    <div id="reportResults">
+                        <div style="text-align: center; padding: 40px 0; color: var(--text-light);">
+                            📋 กรุณาเลือกช่วงวันที่และประเภทรายงาน จากนั้นกดปุ่ม "สร้างรายงาน"
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">📊 กราฟสถิติการเข้าเรียน</h3>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="reportChart"></canvas>
+                    </div>
+                </div>
+            `;
+
+            // Load report chart
+            setTimeout(() => {
+                loadReportChart();
+            }, 100);
+        }
+
+        function loadReportChart() {
+            const ctx = document.getElementById('reportChart');
+            if (!ctx) return;
+
+            const chart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['
