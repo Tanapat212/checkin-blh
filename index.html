@@ -6,15 +6,374 @@
     <title>ระบบจัดการการเข้าเรียน - โรงเรียนบ้านโหล๊ะหาร</title>
     
     <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js">
+        async function editSubject(subjectId) {
+            const subjectData = await getFromDatabase('subjects', subjectId);
+            if(!subjectData) { showNotification('ไม่พบข้อมูลวิชา', 'error'); return; }
+            document.getElementById('subjectModalTitle').textContent = 'แก้ไขวิชา';
+            document.getElementById('subjectName').value = subjectData.name || '';
+            await loadTeachersToSelect();
+            document.getElementById('subjectTeacher').value = subjectData.teacher || '';
+            document.getElementById('subjectClass').value = subjectData.class || '';
+            document.getElementById('subjectCredits').value = subjectData.credits || 0;
+            document.getElementById('subjectYear').value = subjectData.academicYear || '';
+            document.getElementById('subjectForm').onsubmit = async function(e) {
+                e.preventDefault();
+                const name = document.getElementById('subjectName').value;
+                const teacher = document.getElementById('subjectTeacher').value;
+                const cls = document.getElementById('subjectClass').value;
+                const credits = parseInt(document.getElementById('subjectCredits').value) || 0;
+                const year = document.getElementById('subjectYear').value;
+                if(!name || !teacher || !cls || !credits || !year) {
+                    showNotification('กรุณากรอกข้อมูลให้ครบถ้วน', 'error');
+                    return;
+                }
+                const success = await saveToDatabase('subjects', subjectId, {name, teacher, class: cls, credits, academicYear: year});
+                if(success) {
+                    showNotification('แก้ไขข้อมูลวิชาเรียบร้อยแล้ว', 'success');
+                    closeModal('subjectModal');
+                    loadSubjectsList();
+                }
+            };
+            showModal('subjectModal');
+        }
+    
+
+async function checkAttendance(subjectId) {
+    const subjectData = await getFromDatabase('subjects', subjectId);
+    if (!subjectData) {
+        showNotification('ไม่พบข้อมูลวิชา', 'error');
+        return;
+    }
+
+    const users = await getFromDatabase('users');
+    const students = Object.entries(users)
+        .map(([id, data]) => ({ id, ...data }))
+        .filter(u => u.role === 'student' && u.class === subjectData.class);
+
+    let studentListHTML = students.map(s => `
+        <div class="student-item" id="student-${s.id}">
+            <span>${s.name}</span>
+            <div>
+                <button class="btn btn-sm btn-success" onclick="markAttendance('${s.id}','present')">✅</button>
+                <button class="btn btn-sm btn-warning" onclick="markAttendance('${s.id}','late')">⏰</button>
+                <button class="btn btn-sm btn-danger" onclick="markAttendance('${s.id}','absent')">❌</button>
+            </div>
+        </div>
+    `).join('');
+
+    document.getElementById('tabContent').innerHTML = `
+        <div class="card">
+            <h3>เช็คชื่อ: ${subjectData.name} (${subjectData.class})</h3>
+            ${studentListHTML}
+            <div style="margin-top:20px;">
+                <button class="btn btn-success" onclick="saveAttendance('${subjectId}')">💾 บันทึกการเช็คชื่อ</button>
+                <button class="btn btn-secondary" onclick="loadSubjects()">↩️ กลับ</button>
+            </div>
+        </div>
+    `;
+    window.attendanceRecords = {};
+}
+
+function markAttendance(studentId, status) {
+    window.attendanceRecords[studentId] = status;
+    const el = document.getElementById('student-' + studentId);
+    el.classList.remove('present', 'late', 'absent', 'marked');
+    el.classList.add('marked', status);
+}
+
+async function saveAttendance(subjectId) {
+    const today = new Date().toISOString().split('T')[0];
+    for (const [studentId, status] of Object.entries(window.attendanceRecords)) {
+        const recordId = subjectId + '_' + studentId + '_' + today;
+        await saveToDatabase('attendance', recordId, {
+            subjectId,
+            studentId,
+            date: today,
+            status
+        });
+    }
+    showNotification('บันทึกการเช็คชื่อเรียบร้อยแล้ว', 'success');
+    loadSubjects();
+}
+
+
+// ฟังก์ชันโหลดวิชาและชั้นเรียนสำหรับหน้าเช็คชื่อรายวัน
+async function loadDailyAttendanceDropdowns() {
+    const subjectSelect = document.getElementById('dailySubjectSelect');
+    const classSelect = document.getElementById('dailyClassSelect');
+    subjectSelect.innerHTML = '<option value="">เลือกวิชา</option>';
+    classSelect.innerHTML = '<option value="">เลือกชั้นเรียน</option>';
+
+    const subjects = await getFromDatabase('subjects');
+    if (!subjects) return;
+
+    // ถ้าเป็นครู แสดงเฉพาะวิชาที่ครูสอน
+    let subjectArray = Object.entries(subjects).map(([id, data]) => ({ id, ...data }));
+    if (currentUserData.role === 'teacher') {
+        subjectArray = subjectArray.filter(sub => sub.teacher === currentUserData.name);
+    }
+
+    subjectArray.forEach(sub => {
+        const opt = document.createElement('option');
+        opt.value = sub.id;
+        opt.textContent = sub.name; - ${sub.endTime})`; }
+        subjectSelect.appendChild(opt);
+    });
+
+    // เมื่อเปลี่ยนวิชา ให้โหลดชั้นเรียนที่ตรงกับวิชานั้น
+    subjectSelect.addEventListener('change', () => {
+        classSelect.innerHTML = '<option value="">เลือกชั้นเรียน</option>';
+        const selectedSub = subjectArray.find(s => s.id === subjectSelect.value);
+        if (selectedSub) {
+            const opt = document.createElement('option');
+            opt.value = selectedSub.class;
+            opt.textContent = selectedSub.class;
+            classSelect.appendChild(opt);
+        }
+    });
+}
+
+// ฟังก์ชันโหลดรายชื่อนักเรียนจากวิชาและห้องที่เลือก
+async function loadDailyAttendanceList() {
+    const subjectId = document.getElementById('dailySubjectSelect').value;
+    const className = document.getElementById('dailyClassSelect').value;
+    if (!subjectId || !className) {
+        showNotification('กรุณาเลือกวิชาและชั้นเรียน', 'error');
+        return;
+    }
+
+    const subjectData = await getFromDatabase('subjects', subjectId);
+    if (!subjectData) {
+        showNotification('ไม่พบข้อมูลวิชา', 'error');
+        return;
+    }
+
+    const users = await getFromDatabase('users');
+    const students = Object.entries(users)
+        .map(([id, data]) => ({ id, ...data }))
+        .filter(u => u.role === 'student' && u.class === className);
+
+    let studentListHTML = students.map(s => `
+        <div class="student-item" id="student-${s.id}">
+            <span>${s.name}</span>
+            <div>
+                <button class="btn btn-sm btn-success" onclick="markAttendance('${s.id}','present')">✅ เข้าเรียน</button>
+                <button class="btn btn-sm btn-warning" onclick="markAttendance('${s.id}','late')">⏰ มาสาย</button>
+                <button class="btn btn-sm btn-danger" onclick="markAttendance('${s.id}','absent')">❌ ขาด</button>
+            </div>
+        </div>
+    `).join('');
+
+    document.getElementById('dailyAttendanceList').innerHTML = `
+        ${studentListHTML}
+        <div style="margin-top:20px;">
+            <button class="btn btn-success" onclick="saveAttendance('${subjectId}','${className}')">💾 บันทึกการเช็คชื่อ</button>
+        </div>
+    `;
+}
+
+</script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js">
+        async function editSubject(subjectId) {
+            const subjectData = await getFromDatabase('subjects', subjectId);
+            if(!subjectData) { showNotification('ไม่พบข้อมูลวิชา', 'error'); return; }
+            document.getElementById('subjectModalTitle').textContent = 'แก้ไขวิชา';
+            document.getElementById('subjectName').value = subjectData.name || '';
+            await loadTeachersToSelect();
+            document.getElementById('subjectTeacher').value = subjectData.teacher || '';
+            document.getElementById('subjectClass').value = subjectData.class || '';
+            document.getElementById('subjectCredits').value = subjectData.credits || 0;
+            document.getElementById('subjectYear').value = subjectData.academicYear || '';
+            document.getElementById('subjectForm').onsubmit = async function(e) {
+                e.preventDefault();
+                const name = document.getElementById('subjectName').value;
+                const teacher = document.getElementById('subjectTeacher').value;
+                const cls = document.getElementById('subjectClass').value;
+                const credits = parseInt(document.getElementById('subjectCredits').value) || 0;
+                const year = document.getElementById('subjectYear').value;
+                if(!name || !teacher || !cls || !credits || !year) {
+                    showNotification('กรุณากรอกข้อมูลให้ครบถ้วน', 'error');
+                    return;
+                }
+                const success = await saveToDatabase('subjects', subjectId, {name, teacher, class: cls, credits, academicYear: year});
+                if(success) {
+                    showNotification('แก้ไขข้อมูลวิชาเรียบร้อยแล้ว', 'success');
+                    closeModal('subjectModal');
+                    loadSubjectsList();
+                }
+            };
+            showModal('subjectModal');
+        }
+    
+</script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js">
+        async function editSubject(subjectId) {
+            const subjectData = await getFromDatabase('subjects', subjectId);
+            if(!subjectData) { showNotification('ไม่พบข้อมูลวิชา', 'error'); return; }
+            document.getElementById('subjectModalTitle').textContent = 'แก้ไขวิชา';
+            document.getElementById('subjectName').value = subjectData.name || '';
+            await loadTeachersToSelect();
+            document.getElementById('subjectTeacher').value = subjectData.teacher || '';
+            document.getElementById('subjectClass').value = subjectData.class || '';
+            document.getElementById('subjectCredits').value = subjectData.credits || 0;
+            document.getElementById('subjectYear').value = subjectData.academicYear || '';
+            document.getElementById('subjectForm').onsubmit = async function(e) {
+                e.preventDefault();
+                const name = document.getElementById('subjectName').value;
+                const teacher = document.getElementById('subjectTeacher').value;
+                const cls = document.getElementById('subjectClass').value;
+                const credits = parseInt(document.getElementById('subjectCredits').value) || 0;
+                const year = document.getElementById('subjectYear').value;
+                if(!name || !teacher || !cls || !credits || !year) {
+                    showNotification('กรุณากรอกข้อมูลให้ครบถ้วน', 'error');
+                    return;
+                }
+                const success = await saveToDatabase('subjects', subjectId, {name, teacher, class: cls, credits, academicYear: year});
+                if(success) {
+                    showNotification('แก้ไขข้อมูลวิชาเรียบร้อยแล้ว', 'success');
+                    closeModal('subjectModal');
+                    loadSubjectsList();
+                }
+            };
+            showModal('subjectModal');
+        }
+    
+</script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js">
+        async function editSubject(subjectId) {
+            const subjectData = await getFromDatabase('subjects', subjectId);
+            if(!subjectData) { showNotification('ไม่พบข้อมูลวิชา', 'error'); return; }
+            document.getElementById('subjectModalTitle').textContent = 'แก้ไขวิชา';
+            document.getElementById('subjectName').value = subjectData.name || '';
+            await loadTeachersToSelect();
+            document.getElementById('subjectTeacher').value = subjectData.teacher || '';
+            document.getElementById('subjectClass').value = subjectData.class || '';
+            document.getElementById('subjectCredits').value = subjectData.credits || 0;
+            document.getElementById('subjectYear').value = subjectData.academicYear || '';
+            document.getElementById('subjectForm').onsubmit = async function(e) {
+                e.preventDefault();
+                const name = document.getElementById('subjectName').value;
+                const teacher = document.getElementById('subjectTeacher').value;
+                const cls = document.getElementById('subjectClass').value;
+                const credits = parseInt(document.getElementById('subjectCredits').value) || 0;
+                const year = document.getElementById('subjectYear').value;
+                if(!name || !teacher || !cls || !credits || !year) {
+                    showNotification('กรุณากรอกข้อมูลให้ครบถ้วน', 'error');
+                    return;
+                }
+                const success = await saveToDatabase('subjects', subjectId, {name, teacher, class: cls, credits, academicYear: year});
+                if(success) {
+                    showNotification('แก้ไขข้อมูลวิชาเรียบร้อยแล้ว', 'success');
+                    closeModal('subjectModal');
+                    loadSubjectsList();
+                }
+            };
+            showModal('subjectModal');
+        }
+    
+</script>
     
     <!-- External Libraries -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js">
+        async function editSubject(subjectId) {
+            const subjectData = await getFromDatabase('subjects', subjectId);
+            if(!subjectData) { showNotification('ไม่พบข้อมูลวิชา', 'error'); return; }
+            document.getElementById('subjectModalTitle').textContent = 'แก้ไขวิชา';
+            document.getElementById('subjectName').value = subjectData.name || '';
+            await loadTeachersToSelect();
+            document.getElementById('subjectTeacher').value = subjectData.teacher || '';
+            document.getElementById('subjectClass').value = subjectData.class || '';
+            document.getElementById('subjectCredits').value = subjectData.credits || 0;
+            document.getElementById('subjectYear').value = subjectData.academicYear || '';
+            document.getElementById('subjectForm').onsubmit = async function(e) {
+                e.preventDefault();
+                const name = document.getElementById('subjectName').value;
+                const teacher = document.getElementById('subjectTeacher').value;
+                const cls = document.getElementById('subjectClass').value;
+                const credits = parseInt(document.getElementById('subjectCredits').value) || 0;
+                const year = document.getElementById('subjectYear').value;
+                if(!name || !teacher || !cls || !credits || !year) {
+                    showNotification('กรุณากรอกข้อมูลให้ครบถ้วน', 'error');
+                    return;
+                }
+                const success = await saveToDatabase('subjects', subjectId, {name, teacher, class: cls, credits, academicYear: year});
+                if(success) {
+                    showNotification('แก้ไขข้อมูลวิชาเรียบร้อยแล้ว', 'success');
+                    closeModal('subjectModal');
+                    loadSubjectsList();
+                }
+            };
+            showModal('subjectModal');
+        }
+    
+</script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js">
+        async function editSubject(subjectId) {
+            const subjectData = await getFromDatabase('subjects', subjectId);
+            if(!subjectData) { showNotification('ไม่พบข้อมูลวิชา', 'error'); return; }
+            document.getElementById('subjectModalTitle').textContent = 'แก้ไขวิชา';
+            document.getElementById('subjectName').value = subjectData.name || '';
+            await loadTeachersToSelect();
+            document.getElementById('subjectTeacher').value = subjectData.teacher || '';
+            document.getElementById('subjectClass').value = subjectData.class || '';
+            document.getElementById('subjectCredits').value = subjectData.credits || 0;
+            document.getElementById('subjectYear').value = subjectData.academicYear || '';
+            document.getElementById('subjectForm').onsubmit = async function(e) {
+                e.preventDefault();
+                const name = document.getElementById('subjectName').value;
+                const teacher = document.getElementById('subjectTeacher').value;
+                const cls = document.getElementById('subjectClass').value;
+                const credits = parseInt(document.getElementById('subjectCredits').value) || 0;
+                const year = document.getElementById('subjectYear').value;
+                if(!name || !teacher || !cls || !credits || !year) {
+                    showNotification('กรุณากรอกข้อมูลให้ครบถ้วน', 'error');
+                    return;
+                }
+                const success = await saveToDatabase('subjects', subjectId, {name, teacher, class: cls, credits, academicYear: year});
+                if(success) {
+                    showNotification('แก้ไขข้อมูลวิชาเรียบร้อยแล้ว', 'success');
+                    closeModal('subjectModal');
+                    loadSubjectsList();
+                }
+            };
+            showModal('subjectModal');
+        }
+    
+</script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js">
+        async function editSubject(subjectId) {
+            const subjectData = await getFromDatabase('subjects', subjectId);
+            if(!subjectData) { showNotification('ไม่พบข้อมูลวิชา', 'error'); return; }
+            document.getElementById('subjectModalTitle').textContent = 'แก้ไขวิชา';
+            document.getElementById('subjectName').value = subjectData.name || '';
+            await loadTeachersToSelect();
+            document.getElementById('subjectTeacher').value = subjectData.teacher || '';
+            document.getElementById('subjectClass').value = subjectData.class || '';
+            document.getElementById('subjectCredits').value = subjectData.credits || 0;
+            document.getElementById('subjectYear').value = subjectData.academicYear || '';
+            document.getElementById('subjectForm').onsubmit = async function(e) {
+                e.preventDefault();
+                const name = document.getElementById('subjectName').value;
+                const teacher = document.getElementById('subjectTeacher').value;
+                const cls = document.getElementById('subjectClass').value;
+                const credits = parseInt(document.getElementById('subjectCredits').value) || 0;
+                const year = document.getElementById('subjectYear').value;
+                if(!name || !teacher || !cls || !credits || !year) {
+                    showNotification('กรุณากรอกข้อมูลให้ครบถ้วน', 'error');
+                    return;
+                }
+                const success = await saveToDatabase('subjects', subjectId, {name, teacher, class: cls, credits, academicYear: year});
+                if(success) {
+                    showNotification('แก้ไขข้อมูลวิชาเรียบร้อยแล้ว', 'success');
+                    closeModal('subjectModal');
+                    loadSubjectsList();
+                }
+            };
+            showModal('subjectModal');
+        }
+    
+</script>
     
     <style>
         * {
@@ -907,6 +1266,22 @@
             }
         }
     </style>
+
+<style>
+/* Animated background for all pages except login */
+body:not(.login-page) {
+    background: linear-gradient(-45deg, #a8e063, #56ab2f, #f4e04d, #c4d86b);
+    background-size: 400% 400%;
+    animation: gradientBG 15s ease infinite;
+}
+
+@keyframes gradientBG {
+    0% {background-position: 0% 50%;}
+    50% {background-position: 100% 50%;}
+    100% {background-position: 0% 50%;}
+}
+</style>
+
 </head>
 <body>
     <!-- Animated Background -->
@@ -993,7 +1368,7 @@
 
     <!-- Modals -->
     <div id="userModal" class="modal">
-        <div class="modal-content">
+        <div class="modal-content" style="max-height:80vh; overflow-y:auto;">
             <div class="modal-header">
                 <h2 class="modal-title" id="userModalTitle">เพิ่มผู้ใช้ใหม่</h2>
                 <button class="close-btn" onclick="closeModal('userModal')">&times;</button>
@@ -1062,7 +1437,7 @@
     </div>
 
     <div id="subjectModal" class="modal">
-        <div class="modal-content">
+        <div class="modal-content" style="max-height:80vh; overflow-y:auto;">
             <div class="modal-header">
                 <h2 class="modal-title" id="subjectModalTitle">เพิ่มวิชาใหม่</h2>
                 <button class="close-btn" onclick="closeModal('subjectModal')">&times;</button>
@@ -1096,6 +1471,10 @@
                 <div class="form-group">
                     <label for="subjectCredits">หน่วยกิต:</label>
                     <input type="number" id="subjectCredits" class="form-control" min="1" max="5" required>
+                </div>
+                <div class="form-group">
+                    <label for="subjectYear">ปีการศึกษา:</label>
+                    <input type="text" id="subjectYear" class="form-control" placeholder="กรอกปีการศึกษา เช่น 2568" required>
                 </div>
                 <div class="form-row">
                     <button type="submit" class="btn btn-success">💾 บันทึก</button>
@@ -1849,7 +2228,27 @@
         function showAddSubjectModal() {
             document.getElementById('subjectModalTitle').textContent = 'เพิ่มวิชาใหม่';
             document.getElementById('subjectForm').reset();
+            document.getElementById('subjectYear').value = '';
             loadTeachersToSelect();
+            document.getElementById('subjectForm').onsubmit = async function(e) {
+                e.preventDefault();
+                const name = document.getElementById('subjectName').value;
+                const teacher = document.getElementById('subjectTeacher').value;
+                const cls = document.getElementById('subjectClass').value;
+                const credits = parseInt(document.getElementById('subjectCredits').value) || 0;
+                const year = document.getElementById('subjectYear').value;
+                if(!name || !teacher || !cls || !credits || !year) {
+                    showNotification('กรุณากรอกข้อมูลให้ครบถ้วน', 'error');
+                    return;
+                }
+                const id = generateId();
+                const success = await saveToDatabase('subjects', id, {name, teacher, class: cls, credits, academicYear: year});
+                if(success) {
+                    showNotification('บันทึกวิชาเรียบร้อยแล้ว', 'success');
+                    closeModal('subjectModal');
+                    loadSubjectsList();
+                }
+            };
             showModal('subjectModal');
         }
 
@@ -2899,8 +3298,8 @@
                 document.getElementById('schoolStartTime').value = '08:00';
                 document.getElementById('schoolEndTime').value = '15:30';
                 document.getElementById('lateThreshold').value = '08:15';
-                document.getElementById('schoolName').value = 'โรงเรียนบ้านโลหัน';
-                document.getElementById('schoolAddress').value = '123 หมู่ 5 ตำบลบ้านโลหัน อำเภอเมือง จังหวัดสงขลา 90110';
+                document.getElementById('schoolName').value = 'โรงเรียนบ้านโหล๊ะหาร';
+                document.getElementById('schoolAddress').value = 'หมู่ที่7 ตำบลทุ่งนารี อำเภอป่าบอน จังหวัดพัทลุง 93170';
                 document.getElementById('emailNotifications').checked = true;
                 document.getElementById('smsNotifications').checked = false;
                 document.getElementById('dailyReports').checked = true;
@@ -3335,9 +3734,73 @@
                     console.log('Service Worker registration failed');
                 });
         }
-    </script>
+    
+        async function editSubject(subjectId) {
+            const subjectData = await getFromDatabase('subjects', subjectId);
+            if(!subjectData) { showNotification('ไม่พบข้อมูลวิชา', 'error'); return; }
+            document.getElementById('subjectModalTitle').textContent = 'แก้ไขวิชา';
+            document.getElementById('subjectName').value = subjectData.name || '';
+            await loadTeachersToSelect();
+            document.getElementById('subjectTeacher').value = subjectData.teacher || '';
+            document.getElementById('subjectClass').value = subjectData.class || '';
+            document.getElementById('subjectCredits').value = subjectData.credits || 0;
+            document.getElementById('subjectYear').value = subjectData.academicYear || '';
+            document.getElementById('subjectForm').onsubmit = async function(e) {
+                e.preventDefault();
+                const name = document.getElementById('subjectName').value;
+                const teacher = document.getElementById('subjectTeacher').value;
+                const cls = document.getElementById('subjectClass').value;
+                const credits = parseInt(document.getElementById('subjectCredits').value) || 0;
+                const year = document.getElementById('subjectYear').value;
+                if(!name || !teacher || !cls || !credits || !year) {
+                    showNotification('กรุณากรอกข้อมูลให้ครบถ้วน', 'error');
+                    return;
+                }
+                const success = await saveToDatabase('subjects', subjectId, {name, teacher, class: cls, credits, academicYear: year});
+                if(success) {
+                    showNotification('แก้ไขข้อมูลวิชาเรียบร้อยแล้ว', 'success');
+                    closeModal('subjectModal');
+                    loadSubjectsList();
+                }
+            };
+            showModal('subjectModal');
+        }
+    
+</script>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js">
+        async function editSubject(subjectId) {
+            const subjectData = await getFromDatabase('subjects', subjectId);
+            if(!subjectData) { showNotification('ไม่พบข้อมูลวิชา', 'error'); return; }
+            document.getElementById('subjectModalTitle').textContent = 'แก้ไขวิชา';
+            document.getElementById('subjectName').value = subjectData.name || '';
+            await loadTeachersToSelect();
+            document.getElementById('subjectTeacher').value = subjectData.teacher || '';
+            document.getElementById('subjectClass').value = subjectData.class || '';
+            document.getElementById('subjectCredits').value = subjectData.credits || 0;
+            document.getElementById('subjectYear').value = subjectData.academicYear || '';
+            document.getElementById('subjectForm').onsubmit = async function(e) {
+                e.preventDefault();
+                const name = document.getElementById('subjectName').value;
+                const teacher = document.getElementById('subjectTeacher').value;
+                const cls = document.getElementById('subjectClass').value;
+                const credits = parseInt(document.getElementById('subjectCredits').value) || 0;
+                const year = document.getElementById('subjectYear').value;
+                if(!name || !teacher || !cls || !credits || !year) {
+                    showNotification('กรุณากรอกข้อมูลให้ครบถ้วน', 'error');
+                    return;
+                }
+                const success = await saveToDatabase('subjects', subjectId, {name, teacher, class: cls, credits, academicYear: year});
+                if(success) {
+                    showNotification('แก้ไขข้อมูลวิชาเรียบร้อยแล้ว', 'success');
+                    closeModal('subjectModal');
+                    loadSubjectsList();
+                }
+            };
+            showModal('subjectModal');
+        }
+    
+</script>
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
   import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-analytics.js";
@@ -3386,6 +3849,64 @@
   }
 
   ensureDefaultAdmin();
+
+        async function editSubject(subjectId) {
+            const subjectData = await getFromDatabase('subjects', subjectId);
+            if(!subjectData) { showNotification('ไม่พบข้อมูลวิชา', 'error'); return; }
+            document.getElementById('subjectModalTitle').textContent = 'แก้ไขวิชา';
+            document.getElementById('subjectName').value = subjectData.name || '';
+            await loadTeachersToSelect();
+            document.getElementById('subjectTeacher').value = subjectData.teacher || '';
+            document.getElementById('subjectClass').value = subjectData.class || '';
+            document.getElementById('subjectCredits').value = subjectData.credits || 0;
+            document.getElementById('subjectYear').value = subjectData.academicYear || '';
+            document.getElementById('subjectForm').onsubmit = async function(e) {
+                e.preventDefault();
+                const name = document.getElementById('subjectName').value;
+                const teacher = document.getElementById('subjectTeacher').value;
+                const cls = document.getElementById('subjectClass').value;
+                const credits = parseInt(document.getElementById('subjectCredits').value) || 0;
+                const year = document.getElementById('subjectYear').value;
+                if(!name || !teacher || !cls || !credits || !year) {
+                    showNotification('กรุณากรอกข้อมูลให้ครบถ้วน', 'error');
+                    return;
+                }
+                const success = await saveToDatabase('subjects', subjectId, {name, teacher, class: cls, credits, academicYear: year});
+                if(success) {
+                    showNotification('แก้ไขข้อมูลวิชาเรียบร้อยแล้ว', 'success');
+                    closeModal('subjectModal');
+                    loadSubjectsList();
+                }
+            };
+            showModal('subjectModal');
+        }
+    
+</script>
+
+
+
+<footer style="text-align:center; padding:20px; font-size:14px; color:#555; border-top:1px solid #ccc; margin-top:30px;">
+    &copy; Developed by Information Technology Department, Banlohan School
+</footer>
+
+
+<script>
+function getSelectedDays() {
+    return Array.from(document.querySelectorAll('.days-container input[type=checkbox]:checked'))
+                .map(cb => cb.value);
+}
+
+if (typeof saveSubject === 'function') {
+    const originalSaveSubject = saveSubject;
+    saveSubject = function() {
+        let data = originalSaveSubject();
+        if (data) {
+            data.days = getSelectedDays();
+            return data;
+        }
+        return null;
+    }
+}
 </script>
 
 </body>
