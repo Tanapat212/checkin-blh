@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ระบบจัดการการเข้าเรียน - โรงเรียนบ้านโหล๊ะหาร/title>
+    <title>ระบบจัดการการเข้าเรียน - โรงเรียนบ้านโลหัน</title>
     
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
@@ -921,8 +921,8 @@
     <div id="loginSection" class="login-container">
         <div class="login-box">
             <div class="school-logo">🎓</div>
-            <h1 class="login-title">ระบบจัดการการเข้าเรียน</h1>
-            <p class="login-subtitle">โรงเรียนบ้านโหล๊ะหาร</p>
+            <h1 class="login-title">โรงเรียนบ้านโลหัน</h1>
+            <p class="login-subtitle">ระบบจัดการการเข้าเรียน</p>
             
             <form id="loginForm">
                 <div class="form-group">
@@ -1106,60 +1106,30 @@
     </div>
 
     <script>
-    // ===== Firebase Configuration =====
-    const firebaseConfig = {
-        apiKey: "AIzaSyD80W9MK-QjXp3loWlDClrfLoXoODlzlg",
-        authDomain: "check-name-blh.firebaseapp.com",
-        databaseURL: "https://check-name-blh-default-rtdb.asia-southeast1.firebasedatabase.app",
-        projectId: "check-name-blh",
-        storageBucket: "check-name-blh.appspot.com",
-        messagingSenderId: "420973526100",
-        appId: "1:420973526100:web:b7a382f4784382e51281c1",
-        measurementId: "G-86R88K64SC"
-    };
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyD80WK9Mx-QjXp3lOwIDCIrfLoXoODlzlg",
+            authDomain: "check-name-blh.firebaseapp.com",
+            databaseURL: "https://check-name-blh-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "check-name-blh",
+            storageBucket: "check-name-blh.firebasestorage.app",
+            messagingSenderId: "420973526100",
+            appId: "1:420973526100:web:b7a382f4784382e51281c1",
+            measurementId: "G-86R88K64SC"
+        };
 
-    // ===== Initialize Firebase =====
-    let app, db, auth, database;
-    let isFirebaseEnabled = false;
+        // Initialize Firebase
+        let app, db, auth, database;
+        let isFirebaseEnabled = false;
 
-    try {
-        app = firebase.initializeApp(firebaseConfig);
-        db = firebase.firestore();
-        auth = firebase.auth();
-        database = firebase.database();
-        isFirebaseEnabled = true;
-        console.log('✅ Firebase initialized successfully');
-    } catch (error) {
-        console.error('❌ Firebase initialization failed:', error);
-        showNotification('ไม่สามารถเชื่อมต่อฐานข้อมูลได้', 'error');
-    }
-
-    // ===== Auto-create Default Admin if not exists =====
-    async function ensureDefaultAdmin() {
-        if (!isFirebaseEnabled) return;
         try {
-            const adminDoc = await db.collection('users').doc('admin').get();
-            if (!adminDoc.exists) {
-                const defaultAdmin = {
-                    username: 'admin',
-                    password: CryptoJS.SHA256('admin123').toString(),
-                    name: 'ผู้ดูแลระบบ',
-                    email: 'admin@blh.ac.th',
-                    role: 'admin',
-                    createdAt: new Date().toISOString()
-                };
-                await db.collection('users').doc('admin').set(defaultAdmin);
-                console.log('✅ Default admin user created (username: admin / password: admin123)');
-            }
-        } catch (err) {
-            console.error('Error creating default admin:', err);
-        }
-    }
-
-    ensureDefaultAdmin();
-</script>
-
-    try { (error) {
+            app = firebase.initializeApp(firebaseConfig);
+            db = firebase.firestore();
+            auth = firebase.auth();
+            database = firebase.database();
+            isFirebaseEnabled = true;
+            console.log('Firebase initialized successfully');
+        } catch (error) {
             console.error('Firebase initialization failed:', error);
             showNotification('ไม่สามารถเชื่อมต่อฐานข้อมูลได้', 'error');
         }
@@ -3366,6 +3336,58 @@
                 });
         }
     </script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
+  import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-analytics.js";
+  import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+  import { getAuth } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
+  import { getDatabase } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-database.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyD80WK9Mx-QjXp3lOwIDCIrfLoXoODlzlg",
+    authDomain: "check-name-blh.firebaseapp.com",
+    databaseURL: "https://check-name-blh-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "check-name-blh",
+    storageBucket: "check-name-blh.appspot.com",
+    messagingSenderId: "420973526100",
+    appId: "1:420973526100:web:b7a382f4784382e51281c1",
+    measurementId: "G-86R88K64SC"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const analytics = getAnalytics(app);
+  const db = getFirestore(app);
+  const auth = getAuth(app);
+  const rtdb = getDatabase(app);
+
+  async function ensureDefaultAdmin() {
+    try {
+      const adminRef = doc(db, "users", "admin");
+      const snapshot = await getDoc(adminRef);
+      if (!snapshot.exists()) {
+        await setDoc(adminRef, {
+          username: "admin",
+          password: CryptoJS.SHA256("admin123").toString(),
+          name: "ผู้ดูแลระบบ",
+          email: "admin@blh.ac.th",
+          role: "admin",
+          createdAt: new Date().toISOString()
+        });
+        console.log("✅ Default admin created (username: admin / password: admin123)");
+      } else {
+        console.log("ℹ️ Admin user already exists");
+      }
+    } catch (error) {
+      console.error("❌ Error creating admin:", error);
+      alert("เกิดข้อผิดพลาดในการเชื่อม Firebase: " + error.message);
+    }
+  }
+
+  ensureDefaultAdmin();
+</script>
+
 </body>
 </html>
                 
